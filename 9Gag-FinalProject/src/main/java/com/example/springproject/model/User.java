@@ -1,5 +1,6 @@
 package com.example.springproject.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,5 +21,6 @@ public class User {
     @Column
     private String username;
     @Column
+
     private String password;
 }
