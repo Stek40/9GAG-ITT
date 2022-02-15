@@ -1,26 +1,18 @@
-package com.example.springproject.model;
+package com.example.springproject.dto;
+
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.stereotype.Component;
 
-import javax.persistence.*;
+import javax.persistence.Column;
 import java.time.LocalDate;
 
-@Entity
-@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
+public class UserRegisterDto {
 
-
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-    @Column
     private String full_name;
     @Column
     private String username;
@@ -30,6 +22,8 @@ public class User {
     private String email;
     @Column
     private String password;
+    @Column
+    private String confirmPassword;
     @Column
     private boolean show_sensitive_content;
     @Column
@@ -42,8 +36,4 @@ public class User {
     private boolean is_hidden;
     @Column
     private String profile_picture_url;
-
-
-
-
 }
