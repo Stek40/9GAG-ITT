@@ -42,6 +42,17 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         dto.setStatus(HttpStatus.UNAUTHORIZED.value());
         return dto;
     }
+    @ExceptionHandler
+    @ResponseStatus
+    @ResponseBody
+    public ErrorDto allException(Exception e){
+        ErrorDto dto = new ErrorDto();
+        e.printStackTrace();
+        dto.setMsg(e.getMessage());
+        dto.setStatus(HttpStatus.UNAUTHORIZED.value());
+        return dto;
+    }
+
 
 
 }
