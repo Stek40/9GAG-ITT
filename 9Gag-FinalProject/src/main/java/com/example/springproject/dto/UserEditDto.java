@@ -16,5 +16,6 @@ public class UserEditDto {
     private String newEmail;
     private String setGender;
     private String username;
+    private String new_username;
 
 }
