@@ -1,0 +1,11 @@
+POST localhost:9999/new_post
+Content-Type: application/json
+
+{
+  "description" : "Check my new meme",
+  "categoryId" : 4,
+  "userId" : 3,
+  "mediaUrl" : "https://i.redd.it/8341g68g1v7y.png"
+}
+###
+GET localhost:9999/all_posts
