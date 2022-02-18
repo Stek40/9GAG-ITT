@@ -3,6 +3,7 @@ package com.example.springproject.controller;
 import com.example.springproject.dto.ErrorDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
+import com.example.springproject.exceptions.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,6 +31,15 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorDto dto = new ErrorDto();
         dto.setMsg(e.getMessage());
         dto.setStatus(HttpStatus.NOT_FOUND.value());
+        return dto;
+    }
+    @ExceptionHandler(value = UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseBody
+    public ErrorDto unauthorizedException(Exception e){
+        ErrorDto dto = new ErrorDto();
+        dto.setMsg(e.getMessage());
+        dto.setStatus(HttpStatus.UNAUTHORIZED.value());
         return dto;
     }
 
