@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
@@ -47,36 +48,60 @@ public class PostController {
         }
     }
 
-    @PutMapping("/posts/{id}/upvote")
-    public ResponseEntity<Integer> upvoteComment(@PathVariable long id, HttpServletResponse resp) {
+    @PutMapping(value = {"/posts/{id}/upvote", "/posts/{id}/downvote"})
+    public ResponseEntity<Integer> votePost(@PathVariable long id, HttpServletResponse resp, HttpServletRequest req) {
+
         Post p = postRepository.getById(id);
-        int totalUpvotes = p.getUpvotes();
-        if(false) { //check in users_upvote_posts if already upvoted
-            //delete entry in users_upvote_posts
-            p.setUpvotes(totalUpvotes-- - 1);
-        }else{
-            p.setUpvotes(totalUpvotes++ + 1);
+        if(req.getRequestURI().contains("up")) {
+            this.vote(p, true);
+        }else {
+            this.vote(p, false);
         }
         postRepository.save(p);
-        resp.addIntHeader("Upvotes", totalUpvotes);
-        return ResponseEntity.status(200).build();
-    }
-
-    @PutMapping("/posts/{id}/downvote")
-    public ResponseEntity<Integer> downvoteComment(@PathVariable long id, HttpServletResponse resp) {
-        Post p = postRepository.getById(id);
-        p.setDownvotes(p.getDownvotes() + 1);
-        postRepository.save(p);
+        resp.addIntHeader("Upvotes", p.getUpvotes());
         resp.addIntHeader("Downvotes", p.getDownvotes());
         return ResponseEntity.status(200).build();
     }
+    private void vote(Post p, boolean isUpvote) {
+        if(isUpvote) {
+            if(false) {//already upvoted
+                //delete entry from users_upvote_posts
+                p.setUpvotes(p.getUpvotes() - 1);
+            }
+            else if(false) {//already downvoted
+                //remove entry from users_downvote_posts
+                p.setUpvotes(p.getUpvotes() + 1);
+                p.setDownvotes(p.getDownvotes() - 1);
+            }
+            else {
+                p.setUpvotes(p.getUpvotes() + 1);
+            }
+        }
+        else {
+            if(false) {//already downvoted
+                //delete entry from users_downvote_posts
+                p.setDownvotes(p.getDownvotes() - 1);
+            }
+            else if(false) {//already upvoted
+                //remove entry from users_upvote_posts
+                p.setDownvotes(p.getDownvotes() + 1);
+                p.setUpvotes(p.getUpvotes() - 1);
+            }
+            else {
+                p.setDownvotes(p.getDownvotes() + 1);
+            }
+        }
+    }
     @GetMapping("/all_posts")
-    public List<Post> getAllPosts() {
-        return postRepository.findAll();
+    public ResponseEntity<List<Post>> getAllPosts() {
+
+        return ResponseEntity.ok(postRepository.findAll());
     }
     @GetMapping("/posts/{id}")
-    public Post getPostById(@PathVariable long id) {
-        return postRepository.findById(id).orElseThrow(() -> new NotFoundException("post with id=" + id + " doesn't exist"));
+    public ResponseEntity<Post> getPostById(@PathVariable long id) {
+        return ResponseEntity.ok(postRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("post with id=" + id + " doesn't exist")));
+
         /*if(!postRepository.existsById(id)) {
             throw new NotFoundException("post with id=" + id + " doesn't exist");
         }

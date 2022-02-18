@@ -4,7 +4,6 @@ import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.model.Post;
 import com.example.springproject.repositories.CategoryRepository;
-import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
