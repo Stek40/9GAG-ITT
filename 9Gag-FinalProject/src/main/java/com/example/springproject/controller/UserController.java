@@ -16,9 +16,9 @@ import javax.servlet.http.HttpSession;
 @RestController
 public class UserController {
 
-    public static final String LOGGED = "Logged";
+    public static final String LOGGED = "logged";
     public static final String LOGGED_FROM = "loggedFrom";
-    public static final String User_Id = null;
+    public static final String User_Id = "user_id";
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -60,7 +60,7 @@ public class UserController {
         User user = userServices.logIn(userLoginDto);
         session.setAttribute(LOGGED, true);
         session.setAttribute(LOGGED_FROM, request.getRemoteAddr());
-        //session.setAttribute(User_Id, user.getId());
+        session.setAttribute(User_Id, user.getId());
         UserResponseDto userResponseDto = modelMapper.map(user, UserResponseDto.class);
         return ResponseEntity.ok(userResponseDto);
     }
@@ -71,7 +71,7 @@ public class UserController {
     }
 
     private void validateLogin(HttpSession session, HttpServletRequest request) {
-        if (session.isNew() ||
+        if (session.isNew() || session.getAttribute(User_Id) == null ||
                 (!(Boolean) session.getAttribute(LOGGED)) ||
                 (!request.getRemoteAddr().equals(session.getAttribute(LOGGED_FROM)))) {
             throw new UnauthorizedException("You have to login!");
@@ -100,6 +100,35 @@ public class UserController {
         User user = userServices.changePassword(editDto.getId(), editDto.getPassword(), editDto.getNewPassword(), editDto.getConfirmNewPassword());
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
+    @PutMapping("/users/changeUsername")
+    public ResponseEntity<UserResponseDto> changeUsername(@RequestBody UserEditDto userEditDto, HttpSession session, HttpServletRequest request){
+        validateLogin(session,request);
+        User user = userServices.changeUsername(userEditDto.getId(), userEditDto.getNew_username());
+
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+    }
+    @PutMapping("/users/sensitiveContent")
+    public ResponseEntity<UserResponseDto> setSensitiveContent(@RequestBody UserEditDto userEditDto, HttpSession session, HttpServletRequest request){
+        validateLogin(session,request);
+        User user = userServices.setSensitiveContentTrue(userEditDto.getId());
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+    }
+    @PutMapping("/users/isHidden")
+    public ResponseEntity<UserResponseDto> setIsHidden(@RequestBody UserEditDto editDto, HttpSession session, HttpServletRequest request){
+        validateLogin(session,request);
+        User user = userServices.setIsHidden(editDto.getId());
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+    }
+
+    @PutMapping("/users/isPublic")
+    public ResponseEntity<UserResponseDto> setIsPublic(@RequestBody UserEditDto editDto, HttpSession session, HttpServletRequest request){
+        validateLogin(session,request);
+        User user = userServices.setIsPublic(editDto.getId());
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+    }
+
+
+
 }
 
 

@@ -149,4 +149,48 @@ public class UserServices {
         }
         throw new NotFoundException("User not found !");
     }
+
+    public User changeUsername(long id, String newUsername) {
+        if (userRepository.findUserByUsername(newUsername)!= null){
+            throw new BadRequestException("Username already exist !");
+        }
+       User user = userRepository.findById(id).get();
+        if (user == null){
+            throw new NotFoundException("User not found");
+        }
+
+        user.setUsername(newUsername);
+        userRepository.save(user);
+        return user;
+    }
+
+    public User setSensitiveContentTrue(long id) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isPresent()){
+            optionalUser.get().setShow_sensitive_content(true);
+            userRepository.save(optionalUser.get());
+            return optionalUser.get();
+        }
+        throw new NotFoundException("User not found !");
+    }
+
+    public User setIsHidden(long id) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isPresent()){
+            optionalUser.get().set_hidden(true);
+            userRepository.save(optionalUser.get());
+            return optionalUser.get();
+        }
+        throw new NotFoundException("User not found !");
+    }
+
+    public User setIsPublic(long id) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isPresent()){
+            optionalUser.get().set_hidden(false);
+            userRepository.save(optionalUser.get());
+            return optionalUser.get();
+        }
+        throw new NotFoundException("User not found !");
+    }
 }
