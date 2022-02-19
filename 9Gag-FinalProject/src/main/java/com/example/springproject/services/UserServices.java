@@ -37,6 +37,7 @@ public class UserServices {
 
     public User register(UserRegisterDto u) {
         String username = u.getUsername();
+
         String password = u.getPassword();
         String confirmPassword = u.getConfirmPassword();
         String full_name = u.getFull_name();

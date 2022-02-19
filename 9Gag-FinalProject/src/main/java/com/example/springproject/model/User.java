@@ -1,5 +1,6 @@
 package com.example.springproject.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -16,6 +18,7 @@ import java.time.LocalDate;
 
 
 public class User {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,6 +45,9 @@ public class User {
     private boolean is_hidden;
     @Column
     private String profile_picture_url;
+    @OneToMany(mappedBy = "owner")
+    private Set<Post> posts;
+
 
 
 

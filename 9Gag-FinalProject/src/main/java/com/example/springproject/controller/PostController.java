@@ -1,8 +1,10 @@
 package com.example.springproject.controller;
 
+import com.example.springproject.dto.AddPostDto;
 import com.example.springproject.dto.PostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
+import com.example.springproject.exceptions.UnauthorizedException;
 import com.example.springproject.model.Post;
 import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.PostRepository;
@@ -33,6 +35,28 @@ public class PostController {
     private UserController userController;
     @Autowired
     private ModelMapper modelMapper;
+
+    @PostMapping("martin/addPost")
+    public ResponseEntity<Post> add(@RequestBody Post addPostDto){
+
+        Post post = new Post();
+        post.setCategoryId(5);
+        post.setDownvotes(0);
+        post.setUpvotes(0);
+        post.setMediaUrl("asdsadasdsad");
+        post.setUserId(addPostDto.getUserId());
+        post.setDescription("TESTTTTTTTTTTTT");
+        post.setUploadDate(LocalDateTime.now());
+        postRepository.save(post);
+        return ResponseEntity.ok(post);
+
+
+    }
+
+    @GetMapping("/posts/getById/{id}")
+    public Post getPostById(@PathVariable int id){
+        return postRepository.getById((long) id);
+    }
 
     @PostMapping("/new_post")
     @ResponseStatus(code = HttpStatus.CREATED)
