@@ -29,8 +29,6 @@ public class Post {
     @Column
     private int downvotes;
     @Column
-    private long userId;
-    @Column
     private LocalDateTime uploadDate;
     @ManyToOne
     @JoinColumn(name = "user_id")

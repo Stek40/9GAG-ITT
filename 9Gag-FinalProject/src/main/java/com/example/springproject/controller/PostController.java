@@ -2,6 +2,8 @@ package com.example.springproject.controller;
 
 import com.example.springproject.dto.AddPostDto;
 import com.example.springproject.dto.PostDto;
+import com.example.springproject.dto.PostWithOwnerDto;
+import com.example.springproject.dto.UserWithoutPostsDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
@@ -36,22 +38,7 @@ public class PostController {
     @Autowired
     private ModelMapper modelMapper;
 
-    @PostMapping("martin/addPost")
-    public ResponseEntity<Post> add(@RequestBody Post addPostDto){
 
-        Post post = new Post();
-        post.setCategoryId(5);
-        post.setDownvotes(0);
-        post.setUpvotes(0);
-        post.setMediaUrl("asdsadasdsad");
-        post.setUserId(addPostDto.getUserId());
-        post.setDescription("TESTTTTTTTTTTTT");
-        post.setUploadDate(LocalDateTime.now());
-        postRepository.save(post);
-        return ResponseEntity.ok(post);
-
-
-    }
 
     @GetMapping("/posts/getById/{id}")
     public Post getPostById(@PathVariable int id){
@@ -61,19 +48,21 @@ public class PostController {
     @PostMapping("/new_post")
     @ResponseStatus(code = HttpStatus.CREATED)
     public ResponseEntity<PostDto> createPost(@RequestBody Post p, HttpSession session, HttpServletRequest request) {
-
-        userController.validateLogin(request);
+         userController.validateLogin(request);
+        long user_id = (Long)session.getAttribute(UserController.User_Id);
+        p.setOwner(userRepository.findById(user_id).get());
 
         p = postServices.create(p);
         postRepository.save(p);
 
         PostDto dto = modelMapper.map(p, PostDto.class);
+        dto.setUserId(user_id);
         return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
 
     @PutMapping("/save_post")
-    //if logged
-    public void savePost(@RequestBody Post p) {
+    public void savePost(@RequestBody Post p, HttpServletRequest request) {
+        userController.validateLogin(request);
         if(false) {//check in Users_saved_posts if already saved
 
         }
@@ -130,15 +119,20 @@ public class PostController {
         return ResponseEntity.ok(postRepository.findAll());
     }
     @GetMapping("/posts/{id}")
-    public ResponseEntity<Post> getPostById(@PathVariable long id) {
-        return ResponseEntity.ok(postRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("post with id=" + id + " doesn't exist")));
-
-        /*if(!postRepository.existsById(id)) {
-            throw new NotFoundException("post with id=" + id + " doesn't exist");
-        }
-        return postRepository.getById(id);
-         */
+    public PostWithOwnerDto getPostById(@PathVariable long id) {
+        Post p = postRepository.getById(id);
+        PostWithOwnerDto pDto = new PostWithOwnerDto();
+        pDto.setDescription(p.getDescription());
+        pDto.setId(p.getId());
+        pDto.setCategoryId(p.getCategoryId());
+        pDto.setMediaUrl(p.getMediaUrl());
+        pDto.setDownvotes(p.getDownvotes());
+        pDto.setUpvotes(p.getUpvotes());
+        pDto.setUploadDate(p.getUploadDate());
+        pDto.setUserId(p.getOwner().getId());
+        pDto.setOwner(modelMapper.map(p.getOwner(), UserWithoutPostsDto.class));
+        return pDto;
+        //return ResponseEntity.ok(postRepository.findById(id).orElseThrow(() -> new NotFoundException("post with id=" + id + " doesn't exist")));
     }
     @GetMapping("/posts/{id}/download")
     public String downloadPostMedia(@PathVariable long id) {
@@ -148,11 +142,11 @@ public class PostController {
         return postRepository.findById(id).get().getMediaUrl();
     }
     @GetMapping("/user/{username}/posts")
-    public ResponseEntity<List<Post>> getOwnedPosts(@PathVariable String username) {
+    public ResponseEntity<List<Post>> getOwnedPosts(@PathVariable String username, HttpSession session) {
         System.out.println(userRepository.findById(1l).get());
         long userId = userRepository.findUserByUsername(username).getId();
         System.out.println(userId + "!!!!!!!!!!!!!!!!!!");
-        return ResponseEntity.status(200).body(postRepository.findAllByUserId(userId));
+        return null;//ResponseEntity.status(200).body(postRepository.findAllByUserId(userId));
     }
     @GetMapping("/user/{username}/upvotes")
     public ResponseEntity<List<Post>> getUpvotedPosts(@PathVariable String username) {
@@ -170,7 +164,7 @@ public class PostController {
     @DeleteMapping("/post/{id}/delete_post")
     public void deletePost(@PathVariable long id) {
         Post p = postRepository.findById(id).orElseThrow(() -> new NotFoundException("post with id=" + id + "is already deleted"));
-        if(p.getUserId() == 1) {// current user id
+        if(p.getOwner().getId() == 1) {// current user id
             postRepository.delete(p);
         }
     }

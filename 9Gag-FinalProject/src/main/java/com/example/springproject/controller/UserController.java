@@ -2,6 +2,7 @@ package com.example.springproject.controller;
 
 import com.example.springproject.dto.*;
 import com.example.springproject.exceptions.UnauthorizedException;
+import com.example.springproject.model.Post;
 import com.example.springproject.model.User;
 import com.example.springproject.repositories.UserRepository;
 import com.example.springproject.services.UserServices;
@@ -19,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 @RestController
 public class UserController {
@@ -39,6 +42,22 @@ public class UserController {
         User user = userServices.register(u);
         UserResponseDto userResponseDto = modelMapper.map(user, UserResponseDto.class);
         return ResponseEntity.ok(userResponseDto);
+    }
+    @GetMapping("users/posts")
+    public ResponseEntity<UserWithPostsDto> getUserWithPosts(@RequestParam("id") int id) {
+//        User user = userServices.getById(id);
+        return ResponseEntity.ok(modelMapper.map(userRepository.findById((long) id).get(), UserWithPostsDto.class));
+       // Set<Post> posts = user.getPosts();
+//        System.out.println(posts.size() + " -------------------------");
+//        Set<PostWithoutOwnerDto> withoutOwnerDtos = new HashSet<>();
+//        for (Post post:posts) {
+//            withoutOwnerDtos.add(modelMapper.map(post,PostWithoutOwnerDto.class));
+//        }
+
+//        UserWithPostsDto userRespsonse = modelMapper.map(user, UserWithPostsDto.class);
+//        System.out.println(userRespsonse.getPosts().size() + " ---------------------");
+//        //userRespsonse.getPosts().addAll(withoutOwnerDtos);
+//        return ResponseEntity.ok(userRespsonse);
     }
 
     @GetMapping("users")
