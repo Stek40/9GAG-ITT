@@ -1,5 +1,6 @@
 package com.example.springproject.services;
 
+import com.example.springproject.dto.PostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.model.Post;

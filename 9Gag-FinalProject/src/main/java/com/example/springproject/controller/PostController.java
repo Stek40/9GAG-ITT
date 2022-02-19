@@ -1,5 +1,6 @@
 package com.example.springproject.controller;
 
+import com.example.springproject.dto.PostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.model.Post;
@@ -7,6 +8,7 @@ import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
 import com.example.springproject.services.PostServices;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,17 +29,22 @@ public class PostController {
     private UserRepository userRepository;
     @Autowired
     private PostServices postServices;
+    @Autowired
+    private UserController userController;
+    @Autowired
+    private ModelMapper modelMapper;
 
     @PostMapping("/new_post")
     @ResponseStatus(code = HttpStatus.CREATED)
-    public ResponseEntity<Post> createPost(@RequestBody Post p, HttpSession session) {
-        //session.isNew()
-        //if logged
+    public ResponseEntity<PostDto> createPost(@RequestBody Post p, HttpSession session, HttpServletRequest request) {
+
+        userController.validateLogin(request);
 
         p = postServices.create(p);
         postRepository.save(p);
 
-        return ResponseEntity.status(HttpStatus.OK).body(p);
+        PostDto dto = modelMapper.map(p, PostDto.class);
+        return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
 
     @PutMapping("/save_post")
@@ -49,7 +56,7 @@ public class PostController {
     }
 
     @PutMapping(value = {"/posts/{id}/upvote", "/posts/{id}/downvote"})
-    public ResponseEntity<Integer> votePost(@PathVariable long id, HttpServletResponse resp, HttpServletRequest req) {
+    public ResponseEntity<PostDto> votePost(@PathVariable long id, HttpServletResponse resp, HttpServletRequest req) {
 
         Post p = postRepository.getById(id);
         if(req.getRequestURI().contains("up")) {
@@ -58,9 +65,10 @@ public class PostController {
             this.vote(p, false);
         }
         postRepository.save(p);
-        resp.addIntHeader("Upvotes", p.getUpvotes());
-        resp.addIntHeader("Downvotes", p.getDownvotes());
-        return ResponseEntity.status(200).build();
+        //resp.addIntHeader("Upvotes", p.getUpvotes());
+        //resp.addIntHeader("Downvotes", p.getDownvotes());
+        PostDto dto = modelMapper.map(p, PostDto.class);
+        return ResponseEntity.ok(dto);
     }
     private void vote(Post p, boolean isUpvote) {
         if(isUpvote) {

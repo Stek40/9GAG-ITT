@@ -65,7 +65,7 @@ public class UserController {
         session.invalidate();
     }
 
-    private void validateLogin(HttpServletRequest request) {
+    public void validateLogin(HttpServletRequest request) {
         HttpSession session = request.getSession();
         if (session.isNew() || session.getAttribute(User_Id) == null ||
                 (!(Boolean) session.getAttribute(LOGGED)) ||
