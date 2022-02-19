@@ -49,5 +49,11 @@ public class User {
     //@JsonManagedReference
     private Set<Post> posts;
 
+    @OneToMany(mappedBy = "commentOwner")
+    private Set<Comment> comments;
+
+
+
+
 
 }

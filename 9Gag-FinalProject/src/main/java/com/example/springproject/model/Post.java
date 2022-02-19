@@ -33,4 +33,8 @@ public class Post {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User owner;
+    @OneToMany(mappedBy = "post")
+    private Set<Comment> comments;
+
+
 }

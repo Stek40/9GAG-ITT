@@ -1,9 +1,6 @@
 package com.example.springproject.controller;
 
-import com.example.springproject.dto.AddPostDto;
-import com.example.springproject.dto.PostDto;
-import com.example.springproject.dto.PostWithOwnerDto;
-import com.example.springproject.dto.UserWithoutPostsDto;
+import com.example.springproject.dto.*;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
@@ -38,7 +35,12 @@ public class PostController {
     @Autowired
     private ModelMapper modelMapper;
 
-
+   @GetMapping("/aide")
+   public ResponseEntity<PostWithoutCommentPostDto> getPostWithComment(){
+       Post post = postRepository.getById(2L);
+       System.out.println(post.getComments().size() + "--------------------------");
+       return ResponseEntity.ok(modelMapper.map(post,PostWithoutCommentPostDto.class));
+   }
 
     @GetMapping("/posts/getById/{id}")
     public Post getPostById(@PathVariable int id){
