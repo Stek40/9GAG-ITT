@@ -29,8 +29,8 @@ public class PostServices {
         if(p.getMediaUrl() == null || p.getMediaUrl().matches(urlRegex)){
             throw new BadRequestException("post media url is missing or is not correct");
         }
-        if(p.getUserId() <= 0 || !userRepository.existsById(p.getUserId())) {
-            throw new NotFoundException("user with id=" + p.getUserId() + " doesn't exist");
+        if(p.getOwner().getId() <= 0 || !userRepository.existsById(p.getOwner().getId())) {
+            throw new NotFoundException("user with id=" + p.getOwner().getId() + " doesn't exist");
         }
         if(p.getCategoryId() <= 0 || !categoryRepository.existsById((long) p.getCategoryId())) {
             throw new NotFoundException("category with id=" + p.getCategoryId() + " doesn't exist");

@@ -1,5 +1,6 @@
 package com.example.springproject.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,8 +29,13 @@ public class Post {
     private int upvotes;
     @Column
     private int downvotes;
-    @Column
-    private long userId;
+    //@Column
+    //private long userId;
     @Column
     private LocalDateTime uploadDate;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    //@JsonBackReference
+    private User owner;
 }
