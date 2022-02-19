@@ -11,7 +11,7 @@ import lombok.Setter;
 public class UserResponseDto {
 
     private long id;
-
     private String username;
+    private String profile_picture_url;
 
 }
