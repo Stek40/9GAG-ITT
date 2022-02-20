@@ -2,6 +2,7 @@ package com.example.springproject.services;
 
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
+import com.example.springproject.exceptions.UnauthorizedException;
 import com.example.springproject.model.Comment;
 import com.example.springproject.model.Post;
 import com.example.springproject.model.User;
@@ -94,17 +95,56 @@ public class CommentServices {
             comment.setUpvotes(comment.getUppVoters().size());
             user.getUpVoteComments().remove(comment);
             commentRepository.save(comment);
+            userRepository.save(user);
         }
         if (!comment.getDownVoters().contains(user)) {
-
+            user.getDownVote().add(comment);
             comment.getDownVoters().add(user);
             comment.setDownvotes(comment.getDownVoters().size());
             commentRepository.save(comment);
+            userRepository.save(user);
             return comment;
 
         }
-
         throw new BadRequestException("The user already downvote this comment !");
     }
+
+    public Comment removeVot(long commentId, HttpServletRequest request) {
+        User user = userRepository.getUserByRequest(request);
+        Optional<Comment> comment = commentRepository.findById(commentId);
+        if (!comment.isPresent()){
+            throw new NotFoundException("Comment not found !");
+        }
+        if (comment.get().getDownVoters().contains(user) ){
+            comment.get().getDownVoters().remove(user);
+            comment.get().setDownvotes(comment.get().getDownVoters().size());
+            user.getDownVote().remove(comment);
+            userRepository.save(user);
+            commentRepository.save(comment.get());
+            return comment.get();
+        }
+        if (comment.get().getUppVoters().contains(user) ){
+            comment.get().getUppVoters().remove(user);
+            comment.get().setUpvotes(comment.get().getUppVoters().size());
+            user.getUpVoteComments().remove(comment);
+            userRepository.save(user);
+            commentRepository.save(comment.get());
+            return comment.get();
+        }
+        throw new UnauthorizedException("Тhe user didn't  vote !");
+    }
+//    public Comment removeComment(long commendId, HttpServletRequest request){
+//        //TODO Wait Stefan posts_have_comments
+//        User user = userRepository.getUserByRequest(request);
+//        Comment comment = commentRepository.getById(commendId);
+//        if (comment.getCommentOwner() != user && comment.getPost().getOwner() != user){
+//            throw new UnauthorizedException("It is not allowed !");
+//        }
+//        if (comment.getCommentOwner() == user){
+//            commentRepository.delete(comment);
+//            user.getComments().remove(comment);
+//            comment.getPost().getComments().remove(comment);
+//        }
+//    }
 
 }
