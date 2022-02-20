@@ -12,6 +12,8 @@ public class CommentWithoutOwnerDto {
     String text;
     long id;
     String postId;
+    long upvotes;
+    long downvotes;
 
 
 
