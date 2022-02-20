@@ -77,49 +77,17 @@ public class PostController {
     }
 
     @PutMapping(value = {"/posts/{id}/upvote", "/posts/{id}/downvote"})
-    public ResponseEntity<PostDto> votePost(@PathVariable long id, HttpServletRequest request) {
+    public ResponseEntity<PostDto> votePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
-        Post p = postRepository.getById(id);
-        if(request.getRequestURI().contains("up")) {
-            this.vote(p, true);
-        }else {
-            this.vote(p, false);
-        }
+
+        long userId = (Long)session.getAttribute(UserController.User_Id);
+
+        Post p = postServices.votePost(request.getRequestURI().contains("up"), id, userId);
+
         postRepository.save(p);
-        //resp.addIntHeader("Upvotes", p.getUpvotes());
-        //resp.addIntHeader("Downvotes", p.getDownvotes());
+
         PostDto dto = modelMapper.map(p, PostDto.class);
         return ResponseEntity.ok(dto);
-    }
-    private void vote(Post p, boolean isUpvote) {
-        if(isUpvote) {
-            if(false) {//already upvoted
-                //delete entry from users_upvote_posts
-                p.setUpvotes(p.getUpvotes() - 1);
-            }
-            else if(false) {//already downvoted
-                //remove entry from users_downvote_posts
-                p.setUpvotes(p.getUpvotes() + 1);
-                p.setDownvotes(p.getDownvotes() - 1);
-            }
-            else {
-                p.setUpvotes(p.getUpvotes() + 1);
-            }
-        }
-        else {
-            if(false) {//already downvoted
-                //delete entry from users_downvote_posts
-                p.setDownvotes(p.getDownvotes() - 1);
-            }
-            else if(false) {//already upvoted
-                //remove entry from users_upvote_posts
-                p.setDownvotes(p.getDownvotes() + 1);
-                p.setUpvotes(p.getUpvotes() - 1);
-            }
-            else {
-                p.setDownvotes(p.getDownvotes() + 1);
-            }
-        }
     }
     @GetMapping("/all_posts")
     public ResponseEntity<List<PostWithoutOwnerDto>> getAllPosts() {
@@ -152,17 +120,11 @@ public class PostController {
         }
         return postRepository.findById(id).get().getMediaUrl();
     }
-//    @GetMapping("/user/{username}/posts")
-//    public ResponseEntity<List<Post>> getOwnedPosts(@PathVariable String username, HttpSession session, HttpServletRequest request) {
-//        userController.validateLogin(request);
-//        System.out.println(userRepository.findById(1l).get());
-//        long userId = userRepository.findUserByUsername(username).getId();
-//        System.out.println(userId + "!!!!!!!!!!!!!!!!!!");
-//        return null;//ResponseEntity.status(200).body(postRepository.findAllByUserId(userId));
-//    }
     @GetMapping("/users/upvotes")
-    public ResponseEntity<List<Post>> getUpvotedPosts(@RequestParam("id") long id, HttpServletRequest request) {
+    public ResponseEntity<List<Post>> getUpvotedPosts(HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
+        long userId = (Long)session.getAttribute(UserController.User_Id);
+
         //return userRepository.findById(id).get().getUpvotedPosts();
         return null;
     }
@@ -181,7 +143,8 @@ public class PostController {
     @DeleteMapping("/posts/{id}/delete")
     public void deletePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
-        Post p = postRepository.findById(id).orElseThrow(() -> new NotFoundException("post with id=" + id + "is not existing"));
+        postServices.getPostById(id);
+        Post p = postRepository.getById(id);
         if(p.getOwner().getId() == (Long)session.getAttribute(UserController.User_Id)) {//if current user is owner
             postRepository.deleteById(id);
         }

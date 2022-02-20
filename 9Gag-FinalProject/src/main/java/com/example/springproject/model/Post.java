@@ -39,4 +39,19 @@ public class Post {
     @OneToMany(mappedBy = "post")
     private Set<Comment> comments;
 
+    @ManyToMany
+    @JoinTable(
+            name = "users_upvote_posts",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User>  upvoters;
+    @ManyToMany
+    @JoinTable(
+            name = "users_downvote_posts",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User>  downvoters;
+
 }

@@ -46,13 +46,15 @@ public class User {
     @Column
     private String profile_picture_url;
     @OneToMany(mappedBy = "owner")
-    //@JsonManagedReference
     private Set<Post> posts;
 
     @OneToMany(mappedBy = "commentOwner")
     private Set<Comment> comments;
 
-
+    @ManyToMany(mappedBy = "upvoters")
+    private Set<Post> upvotedPosts;
+    @ManyToMany(mappedBy = "downvoters")
+    private Set<Post> downvotedPosts;
 
 
 

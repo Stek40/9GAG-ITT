@@ -4,7 +4,9 @@ import com.example.springproject.dto.PostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.model.Post;
+import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
+import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,8 @@ public class PostServices {
     private UserRepository userRepository;
     @Autowired
     private CategoryRepository categoryRepository;
+    @Autowired
+    private PostRepository postRepository;
 
     public Post create(String description, String mediaUrl, int categoryId, long userId) {
 
@@ -46,5 +50,54 @@ public class PostServices {
         p.setUpvotes(0);
         p.setUploadDate(LocalDateTime.now());
         return p;
+    }
+    public Post votePost(boolean isUpvote, long postId, long userId) {
+        Post p = this.getPostById(postId);
+        User u = userRepository.getById(userId);
+
+        if(isUpvote) {
+            if(u.getUpvotedPosts().contains(p)) {//already upvoted
+                u.getUpvotedPosts().remove(p);
+                p.getUpvoters().remove(u);
+                p.setUpvotes(p.getUpvotes() - 1);
+            }
+            else if(u.getDownvotedPosts().contains(p)) {//already downvoted
+                u.getDownvotedPosts().remove(p);
+                p.getDownvoters().remove(u);
+                p.setDownvotes(p.getDownvotes() - 1);
+                p.getUpvoters().add(u);
+                u.getUpvotedPosts().add(p);
+                p.setUpvotes(p.getUpvotes() + 1);
+            }
+            else {
+                p.getUpvoters().add(u);
+                u.getUpvotedPosts().add(p);
+                p.setUpvotes(p.getUpvotes() + 1);
+            }
+        }
+        else {
+            if(u.getDownvotedPosts().contains(p)) {//already downvoted
+                u.getDownvotedPosts().remove(p);
+                p.getDownvoters().remove(u);
+                p.setDownvotes(p.getDownvotes() - 1);
+            }
+            else if(u.getUpvotedPosts().contains(p)) {//already upvoted
+                u.getUpvotedPosts().remove(p);
+                p.getUpvoters().remove(u);
+                p.setUpvotes(p.getUpvotes() - 1);
+                p.getDownvoters().add(u);
+                u.getDownvotedPosts().add(p);
+                p.setDownvotes(p.getDownvotes() + 1);
+            }
+            else {
+                p.getDownvoters().add(u);
+                u.getDownvotedPosts().add(p);
+                p.setDownvotes(p.getDownvotes() + 1);
+            }
+        }
+        return p;
+    }
+    public Post getPostById(long postId) {
+        return postRepository.findById(postId).orElseThrow(() -> new NotFoundException("post with id=" + postId + "is not existing"));
     }
 }
