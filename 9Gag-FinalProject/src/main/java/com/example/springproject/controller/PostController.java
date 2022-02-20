@@ -57,6 +57,7 @@ public class PostController {
         userController.validateLogin(request);
         long user_id = (Long)session.getAttribute(UserController.User_Id);
         p.setOwner(userRepository.findById(user_id).get());
+
         p = postServices.create(p);
         postRepository.save(p);
         PostDto dto = modelMapper.map(p, PostDto.class);
@@ -123,7 +124,9 @@ public class PostController {
         List<Post> list = postRepository.findAll();
         List<PostWithoutOwnerDto> lst = new ArrayList<>();
         for (Post p : list) {
-            lst.add(modelMapper.map(p, PostWithoutOwnerDto.class));
+            PostWithoutOwnerDto postWithoutOwnerDto = modelMapper.map(p,PostWithoutOwnerDto.class);
+            postWithoutOwnerDto.setCategoryName(p.getCategory().getName());
+            lst.add(postWithoutOwnerDto);
         }
         return ResponseEntity.ok(lst);
     }

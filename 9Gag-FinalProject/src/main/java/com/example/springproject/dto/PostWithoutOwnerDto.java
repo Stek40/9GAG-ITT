@@ -14,8 +14,10 @@ public class PostWithoutOwnerDto {
     private String description;
     private String mediaUrl;
     private int categoryId;
+    private String categoryName;
     private int upvotes;
     private int downvotes;
+
     //private long userId;
     private LocalDateTime uploadDate;
 }
