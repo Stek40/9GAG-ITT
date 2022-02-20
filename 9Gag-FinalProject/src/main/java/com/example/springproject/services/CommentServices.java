@@ -1,7 +1,5 @@
 package com.example.springproject.services;
 
-import com.example.springproject.controller.UserController;
-import com.example.springproject.dto.CommentAddDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.model.Comment;
@@ -13,7 +11,6 @@ import com.example.springproject.repositories.UserRepository;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,32 +31,6 @@ public class CommentServices {
     private CommentRepository commentRepository;
 
 
-//    public Comment addComment(@RequestBody CommentAddDto commentRequest, HttpServletRequest request) {
-//        if (commentRequest.getText()== null && commentRequest.getMediaUrl() == null){
-//            throw new BadRequestException("Please enter a comment");
-//        }
-//        Optional<Post> post = postRepository.findById(commentRequest.getPostId());
-//        Optional<User> commentOwner = userRepository.findById((Long) request.getSession().getAttribute(UserController.User_Id));
-//        if (post.isPresent()){
-//            Comment comment = new Comment();
-//            if (commentRequest.getText() != null){
-//                comment.setText(commentRequest.getText());
-//            }
-//            if (commentRequest.getMediaUrl() != null){
-//                comment.setMediaUrl(commentRequest.getMediaUrl());
-//            }
-//            comment.setUpvotes(0);
-//            comment.setDownvotes(0);
-//            comment.setCommentOwner(commentOwner.get());
-//            comment.setDateTime(LocalDateTime.now());
-//
-//            comment.setPost(post.get());
-//            commentRepository.save(comment);
-//            return comment;
-//
-//        }
-//        throw new NotFoundException("Post not found !");
-//    }
 
     public Comment createComment(MultipartFile file, String text, long postId, long userId) {
         if (text == null && file == null){
@@ -96,4 +67,44 @@ public class CommentServices {
         throw new NotFoundException("Post not found !");
 
     }
+
+    public Comment upVoteComment(long commentId, HttpServletRequest request) {
+       User user = userRepository.getUserByRequest(request);
+      Comment comment = commentRepository.getById(commentId);
+        if (comment.getDownVoters().contains(user)){
+            comment.getDownVoters().remove(user);
+            comment.setDownvotes(comment.getDownVoters().size());
+            commentRepository.save(comment);
+        }
+      if (!comment.getUppVoters().contains(user)){
+          comment.getUppVoters().add(user);
+          comment.setUpvotes(comment.getUppVoters().size());
+          commentRepository.save(comment);
+          user.getUpVoteComments().add(comment);
+          return comment;
+      }
+
+        throw new BadRequestException("The user already upvote this comment !");
+    }
+    public Comment dowVoteComment(long commentId, HttpServletRequest request) {
+        User user = userRepository.getUserByRequest(request);
+        Comment comment = commentRepository.getById(commentId);
+        if (comment.getUppVoters().contains(user)) {
+            comment.getUppVoters().remove(user);
+            comment.setUpvotes(comment.getUppVoters().size());
+            user.getUpVoteComments().remove(comment);
+            commentRepository.save(comment);
+        }
+        if (!comment.getDownVoters().contains(user)) {
+
+            comment.getDownVoters().add(user);
+            comment.setDownvotes(comment.getDownVoters().size());
+            commentRepository.save(comment);
+            return comment;
+
+        }
+
+        throw new BadRequestException("The user already downvote this comment !");
+    }
+
 }

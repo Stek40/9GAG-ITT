@@ -38,6 +38,27 @@ public class CommentController {
         return ResponseEntity.ok(commentResponseDto);
 
     }
+    @PutMapping("/comment/upvote")
+    public ResponseEntity<CommentResponseDto> upvote(@RequestParam (name = "commentId") long commentId, HttpServletRequest request){
+        ValidateData.validatorLogin(request);
+        Comment comment = commentServices.upVoteComment(commentId, request);
+        User user = userRepository.getUserByRequest(request);
+        return ResponseEntity.ok(modelMapper.map(comment,CommentResponseDto.class));
+    }
+    @PutMapping("/comment/downvote")
+    public ResponseEntity<UserResponseDto> downVote(@RequestParam (name = "commentId") long commentId, HttpServletRequest request){
+        ValidateData.validatorLogin(request);
+        Comment comment = commentServices.dowVoteComment(commentId, request);
+        User user = userRepository.getUserByRequest(request);
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+    }
+//    @PutMapping("/comment/removeVote")
+//    public ResponseEntity<UserResponseDto> removeVote(@RequestParam (name = "commentId") long commentId, HttpServletRequest request){
+//        ValidateData.validatorLogin(request);
+//        Comment comment = commentServices.removeVote(commentId, request);
+//        User user = userRepository.getUserByRequest(request);
+//        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+//    }
 
 //    @PostMapping("comment/add")
 //    public ResponseEntity<CommentResponseDto> addComment(@RequestBody CommentAddDto commentRequest, HttpServletRequest request){

@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -33,4 +34,18 @@ public class Comment {
     private long downvotes;
     @Column
     private LocalDateTime dateTime;
+    @ManyToMany()
+    @JoinTable(
+            name = "users_upvote_comments",
+            joinColumns = @JoinColumn (name = "comment_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> uppVoters;
+    @ManyToMany()
+    @JoinTable(
+            name = "users_downvote_comments",
+            joinColumns = @JoinColumn (name = "comment_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> downVoters;
 }

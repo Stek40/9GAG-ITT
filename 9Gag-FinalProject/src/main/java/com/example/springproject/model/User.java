@@ -1,10 +1,8 @@
 package com.example.springproject.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.stereotype.Component;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -53,5 +51,11 @@ public class User {
 
     @ManyToMany(mappedBy = "savedUser")
     private Set<Post> savedPosts;
+
+    @ManyToMany(mappedBy = "uppVoters")
+    private Set<Comment> upVoteComments;
+    @ManyToMany(mappedBy = "downVoters")
+    private Set<Comment> downVote;
+
 
 }
