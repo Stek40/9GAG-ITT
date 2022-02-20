@@ -8,6 +8,7 @@ import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 
@@ -21,20 +22,25 @@ public class PostServices {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    public Post create(Post p) {
-        String pDescription = p.getDescription();
-        if(pDescription == null || pDescription.isBlank() || pDescription.length() <= 2) {
+    public Post create(String description, String mediaUrl, int categoryId, long userId) {
+
+        if(description == null || description.isBlank() || description.length() <= 2) {
             throw new BadRequestException("post description is missing or is less than 3 symbols");
         }
-        if(p.getMediaUrl() == null || p.getMediaUrl().matches(urlRegex)){
+        if(mediaUrl == null || mediaUrl.matches(urlRegex)){
             throw new BadRequestException("post media url is missing or is not correct");
         }
-        if(p.getOwner().getId() <= 0 || !userRepository.existsById(p.getOwner().getId())) {
-            throw new NotFoundException("user with id=" + p.getOwner().getId() + " doesn't exist");
+        if(categoryId <= 0 || !categoryRepository.existsById((long)categoryId)) {
+            throw new NotFoundException("category with id=" + categoryId + " doesn't exist");
         }
-        if(p.getCategory().getId() <= 0 || !categoryRepository.existsById((long) p.getCategory().getId())) {
-            throw new NotFoundException("category with id=" + p.getCategory().getId() + " doesn't exist");
+        if(userId <= 0 || !userRepository.existsById(userId)) {
+            throw new NotFoundException("user with id=" + userId + " doesn't exist");
         }
+        Post p = new Post();
+        p.setDescription(description);
+        p.setMediaUrl(mediaUrl);
+        p.setCategory(categoryRepository.getById((long) categoryId));
+        p.setOwner(userRepository.getById(userId));
 
         p.setDownvotes(0);
         p.setUpvotes(0);

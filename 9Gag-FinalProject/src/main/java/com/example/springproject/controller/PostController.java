@@ -4,6 +4,7 @@ import com.example.springproject.dto.*;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
+import com.example.springproject.model.Category;
 import com.example.springproject.model.Post;
 import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.PostRepository;
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @RestController
@@ -30,6 +32,8 @@ public class PostController {
     private PostRepository postRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
     @Autowired
     private PostServices postServices;
     @Autowired
@@ -53,16 +57,15 @@ public class PostController {
 
     @PostMapping("/new_post")
     @ResponseStatus(code = HttpStatus.CREATED)
-    public ResponseEntity<PostDto> createPost(@RequestBody Post p, HttpSession session, HttpServletRequest request) {
+    public ResponseEntity<PostDto> createPost(@RequestBody PostDto pDto, HttpSession session, HttpServletRequest request) {
         userController.validateLogin(request);
-        long user_id = (Long)session.getAttribute(UserController.User_Id);
-        p.setOwner(userRepository.findById(user_id).get());
-
-        p = postServices.create(p);
+        long userId = (Long)session.getAttribute(UserController.User_Id);
+        System.out.println(userId);
+        Post p = postServices.create(pDto.getDescription(), pDto.getMediaUrl(), pDto.getCategoryId(), userId);
         postRepository.save(p);
-        PostDto dto = modelMapper.map(p, PostDto.class);
-        dto.setUserId(user_id);
-        return ResponseEntity.status(HttpStatus.OK).body(dto);
+        pDto = modelMapper.map(p, PostDto.class);
+        pDto.setUserId(userId);
+        return ResponseEntity.status(HttpStatus.OK).body(pDto);
     }
 
     @PutMapping("/save_post")
