@@ -35,6 +35,18 @@ public class PostController {
     @Autowired
     private ModelMapper modelMapper;
 
+   @GetMapping("/aide")
+   public ResponseEntity<PostWithoutCommentPostDto> getPostWithComment(){
+       Post post = postRepository.getById(2L);
+       System.out.println(post.getComments().size() + "--------------------------");
+       return ResponseEntity.ok(modelMapper.map(post,PostWithoutCommentPostDto.class));
+   }
+
+    @GetMapping("/posts/getById/{id}")
+    public Post getPostById(@PathVariable int id){
+        return postRepository.getById((long) id);
+    }
+
     @PostMapping("/new_post")
     @ResponseStatus(code = HttpStatus.CREATED)
     public ResponseEntity<PostDto> createPost(@RequestBody Post p, HttpSession session, HttpServletRequest request) {

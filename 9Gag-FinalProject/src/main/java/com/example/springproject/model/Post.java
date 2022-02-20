@@ -36,5 +36,7 @@ public class Post {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+    @OneToMany(mappedBy = "post")
+    private Set<Comment> comments;
 
 }
