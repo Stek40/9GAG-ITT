@@ -8,6 +8,7 @@
           <option value="total Upvote" />
           <option value="Upvotes" />
           <option value="Downvotes" />
+          <option value="Text" />
         </set>
       </option>
     </inspection_tool>

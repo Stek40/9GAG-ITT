@@ -4,19 +4,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.io.File;
 @Getter
 @Setter
 @NoArgsConstructor
-public class CommentWithoutOwnerDto {
+public class CommentWithMediaDto {
 
-    String text;
-    long id;
-    String postId;
-    long upvotes;
-    long downvotes;
-    String mediaUrl;
-
-
-
-
+    private String text;
+    private File file;
 }

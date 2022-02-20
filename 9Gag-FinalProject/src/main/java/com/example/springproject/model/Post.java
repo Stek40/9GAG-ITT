@@ -53,5 +53,11 @@ public class Post {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User>  downvoters;
-
+    @ManyToMany()
+    @JoinTable(
+            name = "users_saved_posts",
+            joinColumns = @JoinColumn (name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> savedUser;
 }
