@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -117,9 +118,14 @@ public class PostController {
         }
     }
     @GetMapping("/all_posts")
-    public ResponseEntity<List<Post>> getAllPosts() {
+    public ResponseEntity<List<PostWithoutOwnerDto>> getAllPosts() {
         //no need to be logged
-        return ResponseEntity.ok(postRepository.findAll());
+        List<Post> list = postRepository.findAll();
+        List<PostWithoutOwnerDto> lst = new ArrayList<>();
+        for (Post p : list) {
+            lst.add(modelMapper.map(p, PostWithoutOwnerDto.class));
+        }
+        return ResponseEntity.ok(lst);
     }
     @GetMapping("/posts/{id}")
     public ResponseEntity<PostWithOwnerAndCategoryDto> getPostById(@PathVariable long id) {
