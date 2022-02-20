@@ -32,8 +32,8 @@ public class PostServices {
         if(p.getOwner().getId() <= 0 || !userRepository.existsById(p.getOwner().getId())) {
             throw new NotFoundException("user with id=" + p.getOwner().getId() + " doesn't exist");
         }
-        if(p.getCategoryId() <= 0 || !categoryRepository.existsById((long) p.getCategoryId())) {
-            throw new NotFoundException("category with id=" + p.getCategoryId() + " doesn't exist");
+        if(p.getCategory().getId() <= 0 || !categoryRepository.existsById((long) p.getCategory().getId())) {
+            throw new NotFoundException("category with id=" + p.getCategory().getId() + " doesn't exist");
         }
 
         p.setDownvotes(0);

@@ -23,8 +23,8 @@ public class Post {
     @Column
     private String mediaUrl;
     @Column
-    private int categoryId;
-    @Column
+    //private int categoryId;
+    //@Column
     private int upvotes;
     @Column
     private int downvotes;
@@ -33,4 +33,8 @@ public class Post {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User owner;
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
+
 }

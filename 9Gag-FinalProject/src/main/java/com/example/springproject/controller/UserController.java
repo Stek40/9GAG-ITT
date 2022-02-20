@@ -68,7 +68,7 @@ public class UserController {
         return ResponseEntity.ok(userRespsonse);
     }
 
-    @PostMapping("/users/log")
+    @PostMapping("/users/login")
     public ResponseEntity<UserResponseDto> userLogin(@RequestBody UserLoginDto userLoginDto, HttpServletRequest request) {
         User user = userServices.logIn(userLoginDto);
         HttpSession session = request.getSession();
