@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 public class PostController {
@@ -68,7 +70,7 @@ public class PostController {
     public ResponseEntity<UserResponseDto> savePost(@RequestParam("postId") int postId , HttpServletRequest request) {
         userController.validateLogin(request);
         long userId = userRepository.getIdByRequest(request);
-       User user = postServices.savedPost(postId,userId);
+        User user = postServices.savedPost(postId,userId);
         return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
     }
     @PutMapping("/unsave_post")
@@ -77,13 +79,6 @@ public class PostController {
         long userId = userRepository.getIdByRequest(request);
         User user = postServices.unSavedPost(postId, (Long) request.getSession().getAttribute(UserController.User_Id));
         return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
-    }
-    @GetMapping("/post/allSavedPosts")
-    public ResponseEntity<UserWithAllSavedPostDto> getAllSavedPost(HttpServletRequest httpServletRequest){
-        ValidateData.validatorLogin(httpServletRequest);
-
-       User user = userRepository.getById((Long) httpServletRequest.getSession().getAttribute(UserController.User_Id));
-       return ResponseEntity.ok(modelMapper.map(user,UserWithAllSavedPostDto.class));
     }
 
     @PutMapping(value = {"/posts/{id}/upvote", "/posts/{id}/downvote"})
@@ -130,24 +125,28 @@ public class PostController {
         }
         return postRepository.findById(id).get().getMediaUrl();
     }
-    @GetMapping("/users/upvotes")
-    public ResponseEntity<List<Post>> getUpvotedPosts(HttpServletRequest request, HttpSession session) {
+    @GetMapping("/users/upvoted")
+    public ResponseEntity<Set<PostWithoutOwnerDto>> getUpvotedPosts(HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
         long userId = (Long)session.getAttribute(UserController.User_Id);
 
-        //return userRepository.findById(id).get().getUpvotedPosts();
-        return null;
+        Set<Post> posts = userRepository.getById(userId).getUpvotedPosts();
+        Set<PostWithoutOwnerDto> psts = new HashSet<>();
+        for (Post p : posts) {
+            psts.add(modelMapper.map(p, PostWithoutOwnerDto.class));
+        }
+        return ResponseEntity.ok().body(psts);
     }
-    @GetMapping("/users/saved")
-    public ResponseEntity<List<Post>> getUSavedPosts(@RequestParam("id") long id, HttpServletRequest request) {
-        userController.validateLogin(request);
-        //return userRepository.findById(id).get().getSavedPosts();
-        return null;
+    @GetMapping("/post/allSavedPosts")
+    public ResponseEntity<UserWithAllSavedPostDto> getAllSavedPost(HttpServletRequest httpServletRequest){
+        ValidateData.validatorLogin(httpServletRequest);
+
+        User user = userRepository.getById((Long) httpServletRequest.getSession().getAttribute(UserController.User_Id));
+        return ResponseEntity.ok(modelMapper.map(user,UserWithAllSavedPostDto.class));
     }
     @GetMapping("/users/comments")
     public ResponseEntity<List<Post>> getCommentedPosts(@RequestParam("id") long id, HttpServletRequest request) {
         userController.validateLogin(request);
-        //return userRepository.findById(id).get().getCommentedPosts();
         return null;
     }
     @DeleteMapping("/posts/{id}/delete")
