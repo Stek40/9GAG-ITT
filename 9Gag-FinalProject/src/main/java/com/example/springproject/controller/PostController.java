@@ -1,11 +1,11 @@
 package com.example.springproject.controller;
 
+import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
-import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
-import com.example.springproject.model.Category;
 import com.example.springproject.model.Post;
+import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
@@ -17,13 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 @RestController
 public class PostController {
@@ -69,11 +65,25 @@ public class PostController {
     }
 
     @PutMapping("/save_post")
-    public void savePost(@RequestBody Post p, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> savePost(@RequestParam("postId") int postId , HttpServletRequest request) {
         userController.validateLogin(request);
-        if(false) {//check in Users_saved_posts if already saved
+        long userId = userRepository.getIdByRequest(request);
+       User user = postServices.savedPost(postId,userId);
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+    }
+    @PutMapping("/unsave_post")
+    public ResponseEntity<UserResponseDto> unSave(@RequestParam("postId") int postId , HttpServletRequest request) {
+        userController.validateLogin(request);
+        long userId = userRepository.getIdByRequest(request);
+        User user = postServices.unSavedPost(postId, (Long) request.getSession().getAttribute(UserController.User_Id));
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+    }
+    @GetMapping("/post/allSavedPosts")
+    public ResponseEntity<UserWithAllSavedPostDto> getAllSavedPost(HttpServletRequest httpServletRequest){
+        ValidateData.validatorLogin(httpServletRequest);
 
-        }
+       User user = userRepository.getById((Long) httpServletRequest.getSession().getAttribute(UserController.User_Id));
+       return ResponseEntity.ok(modelMapper.map(user,UserWithAllSavedPostDto.class));
     }
 
     @PutMapping(value = {"/posts/{id}/upvote", "/posts/{id}/downvote"})

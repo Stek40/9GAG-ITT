@@ -48,12 +48,10 @@ public class User {
     @OneToMany(mappedBy = "owner")
     //@JsonManagedReference
     private Set<Post> posts;
-
     @OneToMany(mappedBy = "commentOwner")
     private Set<Comment> comments;
 
-
-
-
+    @ManyToMany(mappedBy = "savedUser")
+    private Set<Post> savedPosts;
 
 }

@@ -1,19 +1,26 @@
 package com.example.springproject.services;
 
 import com.example.springproject.dto.PostDto;
+import com.example.springproject.dto.UserWithAllSavedPostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.model.Post;
+import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
+import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class PostServices {
+
 
     private final String urlRegex = "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\\\+~#?&//=]{2,256}\\\\.[a-z]{2,6}\\\\b([-a-zA-Z0-9@:%._\\\\+~#?&//=]*)";
 
@@ -21,6 +28,11 @@ public class PostServices {
     private UserRepository userRepository;
     @Autowired
     private CategoryRepository categoryRepository;
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     public Post create(String description, String mediaUrl, int categoryId, long userId) {
 
@@ -46,5 +58,35 @@ public class PostServices {
         p.setUpvotes(0);
         p.setUploadDate(LocalDateTime.now());
         return p;
+    }
+
+    public User savedPost(int postId, long userId) {
+        Optional<Post> post = postRepository.findById((long) postId);
+        User user = userRepository.getById(userId);
+        if (post.isPresent()) {
+            if (user.getSavedPosts().contains(post.get())) {
+                throw new BadRequestException("User already saved this post !");
+            }
+            post.get().getSavedUser().add(user);
+            postRepository.save(post.get());
+            return user;
+        }
+        throw new NotFoundException("Post not found !");
+
+    }
+
+    public User unSavedPost(int postId, Long userId) {
+        Optional<Post> post = postRepository.findById((long) postId);
+        User user = userRepository.getById(userId);
+        if (post.isPresent()) {
+            if (user.getSavedPosts().contains(post.get())) {
+                user.getSavedPosts().remove(post.get());
+                post.get().getSavedUser().remove(user);
+                postRepository.save(post.get());
+                return user;
+            }
+        }
+        throw new NotFoundException("Post not found !");
+
     }
 }

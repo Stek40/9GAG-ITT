@@ -25,7 +25,7 @@ public class Comment {
     private Post post;
     @Column
     private String text;
-    @Column
+    @Column(name = "media_url")
     String mediaUrl;
     @Column
     private long upvotes;

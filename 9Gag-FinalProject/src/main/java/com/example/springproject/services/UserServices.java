@@ -19,7 +19,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Optional;
 
 @Service
@@ -72,7 +71,7 @@ public class UserServices {
         if (userRepository.findUserByEmail(email) != null) {
             throw new BadRequestException("User already exists !");
         }
-        if (countryRepository.getById((long) countryId) == null) {
+        if (countryRepository.getById((long) countryId)== null) {
             throw new BadRequestException("Invalid country !");
         }
         if (gender != null) {
@@ -115,8 +114,7 @@ public class UserServices {
     }
 
     public User changeProfilePicture(MultipartFile multipartFile, HttpServletRequest request) {
-        User user = findUserByRequest(request);
-
+        User user = userRepository.getUserByRequest(request);
         String ext = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
         String name = String.valueOf(System.nanoTime())+ "." + ext;
         try {
@@ -130,7 +128,7 @@ public class UserServices {
     }
 
     public User changeEmail(UserEditDto editDto, HttpServletRequest request) {
-        User user = findUserByRequest(request);
+        User user = userRepository.getUserByRequest(request);
         if (!passwordEncoder.matches(editDto.getPassword(), user.getPassword())) {
             throw new BadRequestException("Invalid password");
         }
@@ -138,13 +136,14 @@ public class UserServices {
         if (userRepository.findUserByEmail(editDto.getNewEmail()) != null) {
             throw new BadRequestException("Email already exist !");
         }
+        validateEmail(editDto.getNewEmail());
         user.setEmail(editDto.getNewEmail());
         userRepository.save(user);
         return user;
     }
 
     public User changePassword(UserEditDto dto, HttpServletRequest request) {
-        User user = findUserByRequest(request);
+        User user = userRepository.getUserByRequest(request);
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new BadRequestException("Invalid password !");
@@ -161,7 +160,7 @@ public class UserServices {
     }
 
     public User changeUsername(UserEditDto dto, HttpServletRequest request) {
-        User user = findUserByRequest(request);
+        User user = userRepository.getUserByRequest(request);
         if (userRepository.findUserByUsername(dto.getNew_username()) != null) {
             throw new BadRequestException("Username already exist !");
         }
@@ -171,28 +170,28 @@ public class UserServices {
     }
 
     public User setSensitiveContentTrue(UserEditDto dto, HttpServletRequest request) {
-        User user = findUserByRequest(request);
+        User user = userRepository.getUserByRequest(request);
         user.setShow_sensitive_content(true);
         userRepository.save(user);
         return user;
     }
 
     public User setIsHidden(HttpServletRequest request) {
-        User user = findUserByRequest(request);
+        User user = userRepository.getUserByRequest(request);
         user.set_hidden(true);
         userRepository.save(user);
         return user;
     }
 
     public User setIsPublic(HttpServletRequest request) {
-        User user = findUserByRequest(request);
+        User user = userRepository.getUserByRequest(request);
         user.set_hidden(false);
         userRepository.save(user);
         return user;
     }
 
     public User deleteUser(UserEditDto editDto, HttpServletRequest request) {
-        User user = findUserByRequest(request);
+        User user = userRepository.getUserByRequest(request);
         if (!passwordEncoder.matches(editDto.getPassword(), user.getPassword())) {
             throw new BadRequestException("Invalid password !");
         }
@@ -207,12 +206,5 @@ public class UserServices {
         return true;
     }
 
-    private User findUserByRequest(HttpServletRequest request) {
-        long id = (long) request.getSession().getAttribute(UserController.User_Id);
-        Optional<User> optionalUser = userRepository.findById(id);
-        if (optionalUser.isPresent()) {
-            return optionalUser.get();
-        }
-        throw new NotFoundException("User not found !");
-    }
+
 }
