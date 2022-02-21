@@ -1,6 +1,5 @@
 package com.example.springproject.dto;
 
-import com.example.springproject.model.Comment;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

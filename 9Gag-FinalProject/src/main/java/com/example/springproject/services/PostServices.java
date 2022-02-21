@@ -1,7 +1,6 @@
 package com.example.springproject.services;
 
-import com.example.springproject.dto.PostDto;
-import com.example.springproject.dto.UserWithAllSavedPostDto;
+import com.example.springproject.dto.PostWithoutOwnerDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.model.Post;
@@ -11,12 +10,12 @@ import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 
 @Service
 public class PostServices {

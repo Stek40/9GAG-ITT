@@ -18,10 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 public class PostController {
@@ -81,30 +78,41 @@ public class PostController {
         return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
     }
 
-    @PutMapping(value = {"/posts/{id}/upvote", "/posts/{id}/downvote"})
-    public ResponseEntity<PostDto> votePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
+    @PutMapping("/posts/{id}/upvote")
+    public ResponseEntity<PostDto> upvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
-
         long userId = (Long)session.getAttribute(UserController.User_Id);
-
-        Post p = postServices.votePost(request.getRequestURI().contains("up"), id, userId);
-
+        Post p = postServices.votePost(true, id, userId);
         postRepository.save(p);
 
         PostDto dto = modelMapper.map(p, PostDto.class);
         return ResponseEntity.ok(dto);
     }
-    @GetMapping("/all_posts")
+    @PutMapping("/posts/{id}/downvote")
+    public ResponseEntity<PostDto> downvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
+        userController.validateLogin(request);
+        long userId = (Long)session.getAttribute(UserController.User_Id);
+        Post p = postServices.votePost(false, id, userId);
+        postRepository.save(p);
+
+        PostDto dto = modelMapper.map(p, PostDto.class);
+        return ResponseEntity.ok(dto);
+    }
+    @GetMapping("/posts")
     public ResponseEntity<List<PostWithoutOwnerDto>> getAllPosts() {
-        //no need to be logged
+        //no login
         List<Post> list = postRepository.findAll();
-        List<PostWithoutOwnerDto> lst = new ArrayList<>();
+        List<PostWithoutOwnerDto> postDtos = new ArrayList<>();
         for (Post p : list) {
             PostWithoutOwnerDto postWithoutOwnerDto = modelMapper.map(p,PostWithoutOwnerDto.class);
             postWithoutOwnerDto.setCategoryName(p.getCategory().getName());
-            lst.add(postWithoutOwnerDto);
+            postDtos.add(postWithoutOwnerDto);
         }
-        return ResponseEntity.ok(lst);
+        postDtos.sort((p1, p2) -> {
+            return p2.getUploadDate().compareTo(p1.getUploadDate());
+        });
+
+        return ResponseEntity.ok().body(postDtos);
     }
     @GetMapping("/posts/{id}")
     public ResponseEntity<PostWithOwnerAndCategoryDto> getPostById(@PathVariable long id) {
@@ -131,11 +139,13 @@ public class PostController {
         long userId = (Long)session.getAttribute(UserController.User_Id);
 
         Set<Post> posts = userRepository.getById(userId).getUpvotedPosts();
-        Set<PostWithoutOwnerDto> psts = new HashSet<>();
+        Set<PostWithoutOwnerDto> postsDto = new TreeSet<>((p1, p2) -> {
+            return p2.getUploadDate().compareTo(p1.getUploadDate());
+        });
         for (Post p : posts) {
-            psts.add(modelMapper.map(p, PostWithoutOwnerDto.class));
+            postsDto.add(modelMapper.map(p, PostWithoutOwnerDto.class));
         }
-        return ResponseEntity.ok().body(psts);
+        return ResponseEntity.ok().body(postsDto);
     }
     @GetMapping("/post/allSavedPosts")
     public ResponseEntity<UserWithAllSavedPostDto> getAllSavedPost(HttpServletRequest httpServletRequest){
