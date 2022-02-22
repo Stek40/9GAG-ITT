@@ -101,50 +101,31 @@ public class PostController {
     @GetMapping("/posts")
     public ResponseEntity<List<PostWithoutOwnerDto>> getAllPosts() {
         //no login
-        List<Post> list = postRepository.findAll();
-        List<PostWithoutOwnerDto> postDtos = new ArrayList<>();
-        for (Post p : list) {
-            PostWithoutOwnerDto postWithoutOwnerDto = modelMapper.map(p,PostWithoutOwnerDto.class);
-            postWithoutOwnerDto.setCategoryName(p.getCategory().getName());
-            postDtos.add(postWithoutOwnerDto);
-        }
-        postDtos.sort((p1, p2) -> {
-            return p2.getUploadDate().compareTo(p1.getUploadDate());
-        });
-
+        List<Post> allPosts = postRepository.findAll();
+        List<PostWithoutOwnerDto> postDtos = postServices.sortPostsByDate(allPosts);
         return ResponseEntity.ok().body(postDtos);
     }
     @GetMapping("/posts/{id}")
-    public ResponseEntity<PostWithOwnerAndCategoryDto> getPostById(@PathVariable long id) {
-        //no need to be logged
-        Post p = postRepository.findById(id).orElseThrow(() -> new NotFoundException("post with id=" + id + " doesn't exist"));
-        PostWithOwnerAndCategoryDto pDto = modelMapper.map(p, PostWithOwnerAndCategoryDto.class);
-        pDto.setUserId(p.getOwner().getId());
-        pDto.setOwner(modelMapper.map(p.getOwner(), UserWithoutPostsDto.class));
-        pDto.setCategory(modelMapper.map(p.getCategory(), CategoryWithoutPostsDto.class));
+    public ResponseEntity<PostWithCategoryDto> getPostById(@PathVariable long id) {
+        //no login
+        Post p = postServices.getPostById(id);
+        PostWithCategoryDto pDto = postServices.PostToDtoConversion1(p);
         return ResponseEntity.ok().body(pDto);
-        //return ResponseEntity.ok(postRepository.findById(id).orElseThrow(() -> new NotFoundException("post with id=" + id + " doesn't exist")));
     }
     @GetMapping("/posts/{id}/download")
     public String downloadPostMedia(@PathVariable long id, HttpServletRequest request) {
         userController.validateLogin(request);
-        if(!postRepository.existsById(id)) {
-            throw new NotFoundException("post with id=" + id + " doesn't exist");
-        }
+        postServices.getPostById(id);
         return postRepository.findById(id).get().getMediaUrl();
     }
     @GetMapping("/users/upvoted")
-    public ResponseEntity<Set<PostWithoutOwnerDto>> getUpvotedPosts(HttpServletRequest request, HttpSession session) {
+    public ResponseEntity<List<PostWithoutOwnerDto>> getUpvotedPosts(HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
-        long userId = (Long)session.getAttribute(UserController.User_Id);
+        long userId = (Long)session.getAttribute(UserController.User_Id);//todo method with Marto
 
         Set<Post> posts = userRepository.getById(userId).getUpvotedPosts();
-        Set<PostWithoutOwnerDto> postsDto = new TreeSet<>((p1, p2) -> {
-            return p2.getUploadDate().compareTo(p1.getUploadDate());
-        });
-        for (Post p : posts) {
-            postsDto.add(modelMapper.map(p, PostWithoutOwnerDto.class));
-        }
+
+        List<PostWithoutOwnerDto> postsDto = postServices.sortPostsByDate(new ArrayList<>(posts)); //by date is not correct
         return ResponseEntity.ok().body(postsDto);
     }
     @GetMapping("/post/allSavedPosts")
@@ -170,5 +151,15 @@ public class PostController {
         else {
             throw new UnauthorizedException("Only the owner of the post can delete it!");
         }
+    }
+    @GetMapping("/posts/search/{search}")
+    public ResponseEntity<List<PostWithoutOwnerDto>> searchPosts(@PathVariable String search) {
+        //serialize "search string" into keywords
+        //search in the descriptions of the posts for each word
+        //return posts sorted by most common keywords found first
+
+        List<PostWithoutOwnerDto> result = postServices.searchPostGenerator(search);
+
+       return ResponseEntity.ok().body(result);
     }
 }

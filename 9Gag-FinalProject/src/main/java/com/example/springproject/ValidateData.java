@@ -13,7 +13,6 @@ import javax.servlet.http.HttpSession;
 @RestController
 public  class ValidateData {
 
-
     public  static void validatorLogin(HttpServletRequest request) {
         HttpSession session = request.getSession();
         if (session.isNew() || session.getAttribute(UserController.User_Id)== null ||
@@ -22,9 +21,4 @@ public  class ValidateData {
             throw new UnauthorizedException("You have to login!");
         }
     }
-
-
-
-
-
 }

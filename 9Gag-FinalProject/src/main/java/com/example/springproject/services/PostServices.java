@@ -1,6 +1,9 @@
 package com.example.springproject.services;
 
+import com.example.springproject.dto.CategoryWithoutPostsDto;
+import com.example.springproject.dto.PostWithCategoryDto;
 import com.example.springproject.dto.PostWithoutOwnerDto;
+import com.example.springproject.dto.UserWithoutPostsDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.model.Post;
@@ -12,16 +15,15 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Array;
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 @Service
 public class PostServices {
 
-
-    private final String urlRegex = "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\\\+~#?&//=]{2,256}\\\\.[a-z]{2,6}\\\\b([-a-zA-Z0-9@:%._\\\\+~#?&//=]*)";
+    private static final String ONLY_WORDS_REGEX = "[^a-zA-Z]";
+    private static final String URL_REGEX = "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\\\+~#?&//=]{2,256}\\\\.[a-z]{2,6}\\\\b([-a-zA-Z0-9@:%._\\\\+~#?&//=]*)";
 
     @Autowired
     private UserRepository userRepository;
@@ -37,7 +39,7 @@ public class PostServices {
         if(description == null || description.isBlank() || description.length() <= 2) {
             throw new BadRequestException("post description is missing or is less than 3 symbols");
         }
-        if(mediaUrl == null || mediaUrl.matches(urlRegex)){
+        if(mediaUrl == null || mediaUrl.matches(URL_REGEX)){
             throw new BadRequestException("post media url is missing or is not correct");
         }
         if(categoryId <= 0 || !categoryRepository.existsById((long)categoryId)) {
@@ -104,7 +106,7 @@ public class PostServices {
         return p;
     }
     public Post getPostById(long postId) {
-        return postRepository.findById(postId).orElseThrow(() -> new NotFoundException("post with id=" + postId + "is not existing"));
+        return postRepository.findById(postId).orElseThrow(() -> new NotFoundException("post with id=" + postId + "doesn't exist"));
     }
 
     public User savedPost(int postId, long userId) {
@@ -133,5 +135,104 @@ public class PostServices {
             }
         }
         throw new NotFoundException("Post not found !");
+    }
+
+    public List<PostWithoutOwnerDto> sortPostsByDate(List<Post> allPosts) {
+        List<PostWithoutOwnerDto> posts = new ArrayList<>();
+        for (Post p : allPosts) {
+            posts.add(modelMapper.map(p,PostWithoutOwnerDto.class));
+        }
+        posts.sort((p1, p2) -> {
+            return p2.getUploadDate().compareTo(p1.getUploadDate());
+        });
+        return posts;
+    }
+
+    public PostWithCategoryDto PostToDtoConversion1(Post p) {
+        PostWithCategoryDto pDto = modelMapper.map(p, PostWithCategoryDto.class);
+        pDto.setUserId(p.getOwner().getId());
+        pDto.setOwner(modelMapper.map(p.getOwner(), UserWithoutPostsDto.class));
+        pDto.setCategory(modelMapper.map(p.getCategory(), CategoryWithoutPostsDto.class));
+        return pDto;
+    }
+    public PostWithoutOwnerDto PostToDtoConversion2(Post p) {
+        PostWithoutOwnerDto pDto = modelMapper.map(p, PostWithoutOwnerDto.class);
+        return pDto;
+    }
+    public List<PostWithoutOwnerDto> searchPostGenerator(String search) {
+        ArrayList<String> words = this.extractWords(search);
+
+        ArrayList<String> descriptions = new ArrayList<>(postRepository.findAllPostDescriptions());
+        ArrayList<Integer> ids = new ArrayList<>(postRepository.findAllPostIds());
+
+        for (String s : descriptions) { //test print
+            System.out.println(s);
+        }
+        Map<Long, Integer> numberOfFoundWords = new HashMap<>();
+        Map<Long, String> descWithId = new HashMap<>();
+
+        for (int i = 0; i < ids.size(); i++) {
+            numberOfFoundWords.put((long)ids.get(i), 0);
+            descWithId.put((long)ids.get(i), descriptions.get(i).toLowerCase());
+        }
+        this.countFoundKeywords(words, numberOfFoundWords, descWithId);
+
+        for (Map.Entry<Long, Integer> e : numberOfFoundWords.entrySet()) { //test print
+            System.out.println(e.getKey() + " " + e.getValue());
+        }
+        System.out.println("@@@@@@@@@@@@");
+        SortedSet<Map.Entry<Long, Integer>> sortedIds = this.sortIdsByFoundWords(numberOfFoundWords);
+        List<PostWithoutOwnerDto> result = this.foundPostsFromSearch(sortedIds);
+       return result;
+    }
+
+    private List<PostWithoutOwnerDto> foundPostsFromSearch(SortedSet<Map.Entry<Long, Integer>> sortedIds) {
+        List<PostWithoutOwnerDto> result = new ArrayList<>();
+        for (Map.Entry<Long, Integer> e : sortedIds) {
+            System.out.println(e.getKey() + " " + e.getValue()); //test print
+            if(e.getValue() > 0) {
+                result.add(this.PostToDtoConversion2(postRepository.getById(e.getKey())));
+            }
+        }
+        return result;
+    }
+
+    private SortedSet<Map.Entry<Long, Integer>> sortIdsByFoundWords(Map<Long, Integer> numberOfFoundWords) {
+        SortedSet<Map.Entry<Long, Integer>> sortedIds = new TreeSet<>((n1, n2) -> {
+            return (n2.getValue().equals(n1.getValue())) ? 1 : n2.getValue().compareTo(n1.getValue());
+        });
+        sortedIds.addAll(numberOfFoundWords.entrySet());
+        return sortedIds;
+    }
+
+    private ArrayList<String> extractWords(String search) {
+        String[] wrds = search.split(ONLY_WORDS_REGEX);
+        ArrayList<String> words = new ArrayList<>();
+        for (String s : wrds) {
+            if(s.length() > 0 ) {
+                words.add(s.toLowerCase());
+                System.out.println(s);
+            }
+        }
+        if(words.size() == 0) {
+            throw new NotFoundException("No posts were found.");
+        }
+        return words;
+    }
+
+    private void countFoundKeywords(ArrayList<String> words, Map<Long, Integer> numberOfFoundWords, Map<Long, String> descWithId) {
+        boolean anyKeywordsFound = false;
+        for (String w : words) {
+
+            for (Map.Entry<Long, String> e : descWithId.entrySet()) {
+                if(e.getValue().contains(w)) {
+                    numberOfFoundWords.put(e.getKey(), numberOfFoundWords.get(e.getKey()) + 1);
+                    anyKeywordsFound = true;
+                }
+            }
+        }
+        if(!anyKeywordsFound) {
+            throw new NotFoundException("No posts were found.");
+        }
     }
 }
