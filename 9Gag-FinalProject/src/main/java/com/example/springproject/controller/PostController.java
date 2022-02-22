@@ -99,10 +99,18 @@ public class PostController {
         return ResponseEntity.ok(dto);
     }
     @GetMapping("/posts")
-    public ResponseEntity<List<PostWithoutOwnerDto>> getAllPosts() {
+    public ResponseEntity<List<PostWithoutOwnerDto>> getAllPosts(@RequestParam("sort by upvotes") boolean isByUpvotes) {
         //no login
-        List<Post> allPosts = postRepository.findAll();
-        List<PostWithoutOwnerDto> postDtos = postServices.sortPostsByDate(allPosts);
+        List<Post> allPosts;
+        if(isByUpvotes) {
+            allPosts = postRepository.getAllOrderByUpvotes();
+        } else {
+            allPosts = postRepository.getAllOrderByUploadDate();
+        }
+        List<PostWithoutOwnerDto> postDtos = new ArrayList<>();
+        for (Post p : allPosts) {
+            postDtos.add(modelMapper.map(p, PostWithoutOwnerDto.class));
+        }
         return ResponseEntity.ok().body(postDtos);
     }
     @GetMapping("/posts/{id}")
