@@ -11,6 +11,10 @@ import java.util.List;
 @Repository
 public interface PostRepository  extends JpaRepository<Post, Long> {
     @Query(
+            value = "SELECT media_url FROM posts WHERE id = ?",
+            nativeQuery = true)
+    String getMediaUrlOfPostWithId(long id);
+    @Query(
             value = "SELECT * FROM posts order by upload_date desc",
             nativeQuery = true)
     List<Post> getAllOrderByUploadDate();

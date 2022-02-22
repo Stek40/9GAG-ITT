@@ -11,11 +11,17 @@ import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
+import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -234,5 +240,14 @@ public class PostServices {
         if(!anyKeywordsFound) {
             throw new NotFoundException("No posts were found.");
         }
+    }
+
+    public String saveMedia(MultipartFile file) throws IOException {
+        String name = String.valueOf(System.nanoTime());
+        String ext = FilenameUtils.getExtension(file.getOriginalFilename());
+        String nameAndExt = name + "." + ext;
+        File destination = new File("media" + File.separator + "postMedia" + File.separator + nameAndExt);
+        Files.copy(file.getInputStream(), Path.of(destination.toURI()));
+        return nameAndExt;
     }
 }

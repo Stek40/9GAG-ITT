@@ -4,21 +4,31 @@ import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
+import com.example.springproject.model.Comment;
 import com.example.springproject.model.Post;
 import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
 import com.example.springproject.services.PostServices;
+import lombok.SneakyThrows;
+import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+
+import static java.awt.SystemColor.text;
 
 @RestController
 public class PostController {
@@ -50,15 +60,20 @@ public class PostController {
         return postRepository.getById((long) id);
     }
 
-    @PostMapping("/new_post")
-    @ResponseStatus(code = HttpStatus.CREATED)
-    public ResponseEntity<PostDto> createPost(@RequestBody PostDto pDto, HttpSession session, HttpServletRequest request) {
+    @SneakyThrows
+    @PostMapping("new_post")
+    public ResponseEntity<PostDto> createPost(@RequestParam(name = "file") MultipartFile file,
+                                                         @RequestParam(name = "description")String description,
+                                                         @RequestParam(name = "categoryId") int categoryId,
+                                                         HttpServletRequest request,
+                                                         HttpSession session){
         userController.validateLogin(request);
+
+        String nameAndExt = postServices.saveMedia(file);
         long userId = (Long)session.getAttribute(UserController.User_Id);
-        System.out.println(userId);
-        Post p = postServices.create(pDto.getDescription(), pDto.getMediaUrl(), pDto.getCategoryId(), userId);
+        Post p = postServices.create(description, nameAndExt, categoryId, userId);
         postRepository.save(p);
-        pDto = modelMapper.map(p, PostDto.class);
+        PostDto pDto = modelMapper.map(p, PostDto.class);
         pDto.setUserId(userId);
         return ResponseEntity.status(HttpStatus.OK).body(pDto);
     }
@@ -119,12 +134,6 @@ public class PostController {
         Post p = postServices.getPostById(id);
         PostWithCategoryDto pDto = postServices.PostToDtoConversion1(p);
         return ResponseEntity.ok().body(pDto);
-    }
-    @GetMapping("/posts/{id}/download")
-    public String downloadPostMedia(@PathVariable long id, HttpServletRequest request) {
-        userController.validateLogin(request);
-        postServices.getPostById(id);
-        return postRepository.findById(id).get().getMediaUrl();
     }
     @GetMapping("/users/upvoted")
     public ResponseEntity<List<PostWithoutOwnerDto>> getUpvotedPosts(HttpServletRequest request, HttpSession session) {

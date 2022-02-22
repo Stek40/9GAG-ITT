@@ -32,9 +32,9 @@ public class CommentController {
                                                          HttpServletRequest request){
         ValidateData.validatorLogin(request);
         long userId = userRepository.getIdByRequest(request);
-          Comment comment = commentServices.createComment(file, text, postId, userId);
-         CommentResponseDto commentResponseDto = modelMapper.map(comment,CommentResponseDto.class);
-         commentResponseDto.setUserId(userId);
+        Comment comment = commentServices.createComment(file, text, postId, userId);
+        CommentResponseDto commentResponseDto = modelMapper.map(comment,CommentResponseDto.class);
+        commentResponseDto.setUserId(userId);
         return ResponseEntity.ok(commentResponseDto);
 
     }
