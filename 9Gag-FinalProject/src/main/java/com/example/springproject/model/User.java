@@ -7,6 +7,7 @@ import lombok.Setter;
 import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.Set;
+import java.util.TreeSet;
 
 @Entity
 @Table(name = "users")

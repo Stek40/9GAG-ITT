@@ -36,7 +36,10 @@ public class CommentController {
         ValidateData.validatorLogin(request);
         long userId = userRepository.getIdByRequest(request);
         Comment comment = commentServices.createComment(file, text, postId, userId);
+
         CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
+
+
         commentResponseDto.setUserId(userId);
         return ResponseEntity.ok(commentResponseDto);
 
