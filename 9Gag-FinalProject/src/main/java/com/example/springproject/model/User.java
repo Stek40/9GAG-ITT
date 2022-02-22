@@ -39,8 +39,8 @@ public class User {
     private String gender;
     @Column
     private LocalDate date_of_birth;
-    @Column
-    private boolean is_hidden;
+    @Column(name = "is_hidden")
+    private boolean hidden;
     @Column
     private String profile_picture_url;
     @OneToMany(mappedBy = "owner")

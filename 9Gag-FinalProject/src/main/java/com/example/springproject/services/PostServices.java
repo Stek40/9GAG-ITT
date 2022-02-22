@@ -115,6 +115,7 @@ public class PostServices {
             if (user.getSavedPosts().contains(post.get())) {
                 throw new BadRequestException("User already saved this post !");
             }
+
             post.get().getSavedUser().add(user);
             postRepository.save(post.get());
             return user;

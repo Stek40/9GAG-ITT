@@ -1,5 +1,8 @@
 package com.example.springproject.services;
 
+import com.example.springproject.dto.CommentWithoutOwnerDto;
+import com.example.springproject.dto.PostWithoutCommentPostDto;
+import com.example.springproject.dto.newDtos.comment.AllCommentsOnPostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
@@ -10,7 +13,9 @@ import com.example.springproject.repositories.CommentRepository;
 import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
 import org.apache.commons.io.FilenameUtils;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,6 +25,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 @Service
 public class CommentServices {
@@ -30,10 +38,13 @@ public class CommentServices {
     private PostRepository postRepository;
     @Autowired
     private CommentRepository commentRepository;
+    @Autowired
+    private ModelMapper modelMapper;
 
 
 
     public Comment createComment(MultipartFile file, String text, long postId, long userId) {
+
         if (text == null && file == null){
             throw new BadRequestException("Please enter a comment");
         }
@@ -41,15 +52,16 @@ public class CommentServices {
         Optional<User> commentOwner = userRepository.findById(userId);
         if (post.isPresent()){
             Comment comment = new Comment();
-            if (file != null){
+            if (!file.isEmpty()){
                 String ext = FilenameUtils.getExtension(file.getOriginalFilename());
                 String name = System.nanoTime() +"."+ ext;
                 try {
                     Files.copy(file.getInputStream(), new File("commentImages" + File.separator + name).toPath());
+                    comment.setMediaUrl(name);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                comment.setMediaUrl(name);
+
             }
             if (text != null){
                 comment.setText(text);
@@ -62,6 +74,7 @@ public class CommentServices {
             comment.setPost(post.get());
             commentRepository.save(comment);
             post.get().getComments().add(comment);
+
             return comment;
 
         }
@@ -133,12 +146,45 @@ public class CommentServices {
         }
         throw new UnauthorizedException("Тhe user didn't  vote !");
     }
+
+    public Set<PostWithoutCommentPostDto> getAllCommentPosts(HttpServletRequest request) {
+        User user = userRepository.getUserByRequest(request);
+        Set<PostWithoutCommentPostDto> allCommentedPosts = new TreeSet<>();
+        for (Comment c:user.getComments()) {
+            PostWithoutCommentPostDto postWithoutCommentPostDto = modelMapper.map(c.getPost(),PostWithoutCommentPostDto.class);
+            allCommentedPosts.add(postWithoutCommentPostDto);
+        }
+        return allCommentedPosts;
+    }
+
+    public AllCommentsOnPostDto getAllCommentByPostId(long postId) {
+        Optional<Post> post = postRepository.findById(postId);
+        if (post.isPresent()){
+            AllCommentsOnPostDto allComments = modelMapper.map(post.get(), AllCommentsOnPostDto.class);
+            allComments.setComments(allComments.getComments().stream().sorted((c1,c2)-> (int) (c2.getUpvotes() - c1.getUpvotes())).collect(Collectors.toList()));
+
+            return allComments;
+        }
+        throw new NotFoundException("Post not found !");
+
+    }
+
+    public AllCommentsOnPostDto getAllCommentByPostDate(long postId) {
+        Optional<Post> post = postRepository.findById(postId);
+        if (post.isPresent()){
+            AllCommentsOnPostDto allComments = modelMapper.map(post.get(), AllCommentsOnPostDto.class);
+            allComments.setComments(allComments.getComments().stream().sorted((c1,c2)-> (c2.getDateTime().compareTo(c1.getDateTime()))).collect(Collectors.toList()));
+
+            return allComments;
+        }
+        throw new NotFoundException("Post not found !");
+    }
 //    public Comment removeComment(long commendId, HttpServletRequest request){
 //        //TODO Wait Stefan posts_have_comments
 //        User user = userRepository.getUserByRequest(request);
 //        Comment comment = commentRepository.getById(commendId);
 //        if (comment.getCommentOwner() != user && comment.getPost().getOwner() != user){
-//            throw new UnauthorizedException("It is not allowed !");
+//            throw new UnauthorizedException("The user is not the owner of the comment!");
 //        }
 //        if (comment.getCommentOwner() == user){
 //            commentRepository.delete(comment);

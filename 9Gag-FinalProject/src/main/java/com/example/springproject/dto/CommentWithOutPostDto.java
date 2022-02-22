@@ -10,8 +10,12 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 public class CommentWithOutPostDto {
-
+    private long id;
     private String text;
     private LocalDateTime localDateTime;
     private int ownerId;
+    private int upVotes;
+    private int downVotes;
+
+
 }

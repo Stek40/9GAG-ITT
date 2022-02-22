@@ -18,10 +18,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.lang.reflect.Type;
+import java.util.*;
 
 @RestController
 public class PostController {
@@ -40,7 +38,16 @@ public class PostController {
     private ModelMapper modelMapper;
 
 
+   @GetMapping("/martin/allPosts")
+   public ResponseEntity<PostWithoutCommentPostDto>   getlAllPostByDate(){
 
+       ArrayList<Post> posts = (ArrayList<Post>) postRepository.findAll();
+       Comparator<Post> comparatorDate = Comparator.comparing(Post::getUploadDate);
+       posts.sort(comparatorDate);
+      ArrayList<PostWithoutCommentPostDto> allPosts =modelMapper.map(posts, (Type) PostWithoutCommentPostDto.class);
+     return ResponseEntity.ok(modelMapper.map(posts,PostWithoutCommentPostDto.class));
+
+   }
    @GetMapping("/aide")
    public ResponseEntity<PostWithoutCommentPostDto> getPostWithComment(){
        Post post = postRepository.getById(2L);

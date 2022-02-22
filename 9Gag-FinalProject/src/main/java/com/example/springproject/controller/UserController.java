@@ -2,6 +2,9 @@ package com.example.springproject.controller;
 
 import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
+import com.example.springproject.dto.newDtos.user.UserCreatedPostsByDate;
+import com.example.springproject.dto.newDtos.user.UserRegisterDto;
+import com.example.springproject.dto.newDtos.user.UserResponseDtoRegister;
 import com.example.springproject.exceptions.UnauthorizedException;
 import com.example.springproject.model.User;
 import com.example.springproject.repositories.UserRepository;
@@ -32,45 +35,22 @@ public class UserController {
 
 
     @PostMapping("/users/register")
-    public ResponseEntity<UserResponseDto> register(@RequestBody UserRegisterDto u) {
-        User user = userServices.register(u);
-        UserResponseDto userResponseDto = modelMapper.map(user, UserResponseDto.class);
-        return ResponseEntity.ok(userResponseDto);
+    public ResponseEntity<UserResponseDtoRegister> register(@RequestBody UserRegisterDto u) {
+        return userServices.register(u);
     }
     @GetMapping("users/posts")
-    public ResponseEntity<UserWithPostsDto> getUserWithPosts(HttpServletRequest request) {
+    public ResponseEntity<UserCreatedPostsByDate> getUserWithPosts(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User user = userRepository.getUserByRequest(request);
-        return ResponseEntity.ok(modelMapper.map(user, UserWithPostsDto.class));
-       // Set<Post> posts = user.getPosts();
-//        System.out.println(posts.size() + " -------------------------");
-//        Set<PostWithoutOwnerDto> withoutOwnerDtos = new HashSet<>();
-//        for (Post post:posts) {
-//            withoutOwnerDtos.add(modelMapper.map(post,PostWithoutOwnerDto.class));
-//        }
-
-//        UserWithPostsDto userRespsonse = modelMapper.map(user, UserWithPostsDto.class);
-//        System.out.println(userRespsonse.getPosts().size() + " ---------------------");
-//        //userRespsonse.getPosts().addAll(withoutOwnerDtos);
-//        return ResponseEntity.ok(userRespsonse);
+        return userServices.getAllCreatedPosts(request);
     }
-
     @GetMapping("users")
-    public ResponseEntity<UserResponseDto> getUserById(@RequestParam("id") int id) {
-        User user = userServices.getById(id);
-        UserResponseDto userRespsonse = modelMapper.map(user, UserResponseDto.class);
-        return ResponseEntity.ok(userRespsonse);
+    public ResponseEntity<UserResponseDtoRegister> getUserById(@RequestParam("id") int id) {
+        return userServices.getById(id);
     }
 
     @PostMapping("/users/login")
     public ResponseEntity<UserResponseDto> userLogin(@RequestBody UserLoginDto userLoginDto, HttpServletRequest request) {
-        User user = userServices.logIn(userLoginDto);
-        HttpSession session = request.getSession();
-        session.setAttribute(LOGGED, true);
-        session.setAttribute(LOGGED_FROM, request.getRemoteAddr());
-        session.setAttribute(User_Id, user.getId());
-        UserResponseDto userResponseDto = modelMapper.map(user, UserResponseDto.class);
-        return ResponseEntity.ok(userResponseDto);
+        return userServices.logIn(userLoginDto,request);
     }
 
     @PostMapping("/users/logout")

@@ -1,39 +1,25 @@
-package com.example.springproject.dto;
-
+package com.example.springproject.dto.newDtos.user;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.Column;
 import java.time.LocalDate;
 
 @Getter
 @Setter
 @NoArgsConstructor
-public class UserRegisterDto {
-
+public class UserResponseDtoRegister {
+    private long id;
     private String full_name;
-    @Column
     private String username;
-    @Column
     private String about;
-    @Column
     private String email;
-    @Column
-    private String password;
-    @Column
-    private String confirmPassword;
-    @Column
     private boolean show_sensitive_content;
-    @Column
     private long country_id;
-    @Column
     private String gender;
-    @Column
     private LocalDate date_of_birth;
-    @Column
-    private boolean is_hidden;
-    @Column
+    private boolean isHidden;
     private String profile_picture_url;
+
 }

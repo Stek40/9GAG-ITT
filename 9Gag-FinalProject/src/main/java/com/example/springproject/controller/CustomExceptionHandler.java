@@ -2,6 +2,7 @@ package com.example.springproject.controller;
 
 import com.example.springproject.dto.ErrorDto;
 import com.example.springproject.exceptions.BadRequestException;
+import com.example.springproject.exceptions.DateTimeParseException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
 import org.springframework.http.HttpStatus;
@@ -50,6 +51,15 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         e.printStackTrace();
         dto.setMsg(e.getMessage());
         dto.setStatus(HttpStatus.UNAUTHORIZED.value());
+        return dto;
+    }
+    @ExceptionHandler(value = DateTimeParseException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ErrorDto handlerDateException (Exception e){
+        ErrorDto dto = new ErrorDto();
+        dto.setMsg(e.getMessage());
+        dto.setStatus(HttpStatus.BAD_REQUEST.value());
         return dto;
     }
 
