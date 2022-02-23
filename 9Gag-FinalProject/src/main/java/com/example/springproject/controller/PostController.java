@@ -2,6 +2,7 @@ package com.example.springproject.controller;
 
 import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
+import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.exceptions.UnauthorizedException;
 import com.example.springproject.model.Post;
 import com.example.springproject.model.User;
@@ -41,38 +42,31 @@ public class PostController {
     private ModelMapper modelMapper;
 
 
-   @GetMapping("/martin/allPosts")
-   public ResponseEntity<PostWithoutCommentPostDto>   getlAllPostByDate(){
-
-       ArrayList<Post> posts = (ArrayList<Post>) postRepository.findAll();
-       Comparator<Post> comparatorDate = Comparator.comparing(Post::getUploadDate);
-       posts.sort(comparatorDate);
-      ArrayList<PostWithoutCommentPostDto> allPosts =modelMapper.map(posts, (Type) PostWithoutCommentPostDto.class);
-     return ResponseEntity.ok(modelMapper.map(posts,PostWithoutCommentPostDto.class));
-
-   }
+//   @GetMapping("/martin/allPosts")
+//   public ResponseEntity<PostWithoutCommentPostDto>   getlAllPostByDate(){
+//
+//       ArrayList<Post> posts = (ArrayList<Post>) postRepository.findAll();
+//       Comparator<Post> comparatorDate = Comparator.comparing(Post::getUploadDate);
+//       posts.sort(comparatorDate);
+//      ArrayList<PostWithoutCommentPostDto> allPosts =modelMapper.map(posts, (Type) PostWithoutCommentPostDto.class);
+//     return ResponseEntity.ok(modelMapper.map(posts,PostWithoutCommentPostDto.class));
+//   }
 
     @SneakyThrows
     @PostMapping("new_post")
-    public ResponseEntity<PostDto> createPost(@RequestParam(name = "file") MultipartFile file,
-                                                         @RequestParam(name = "description")String description,
-                                                         @RequestParam(name = "categoryId") int categoryId,
-                                                         HttpServletRequest request,
-                                                         HttpSession session){
+    public ResponseEntity<DisplayPostDto> createPost(@RequestParam(name = "file") MultipartFile file,
+                                                     @RequestParam(name = "description")String description,
+                                                     @RequestParam(name = "categoryId") int categoryId,
+                                                     HttpServletRequest request,
+                                                     HttpSession session){
         userController.validateLogin(request);
 
         String nameAndExt = postServices.saveMedia(file);
         long userId = (Long)session.getAttribute(UserController.User_Id);
         Post p = postServices.create(description, nameAndExt, categoryId, userId);
         postRepository.save(p);
-        PostDto pDto = modelMapper.map(p, PostDto.class);
-        pDto.setUserId(userId);
+        DisplayPostDto pDto = postServices.PostToDisplayPostDtoConversion(p);
         return ResponseEntity.status(HttpStatus.OK).body(pDto);
-    }
-
-    @GetMapping("/posts/getById/{id}")
-    public Post getPostById(@PathVariable int id){
-        return postRepository.getById((long) id);
     }
 
     @PutMapping("/save_post")
@@ -91,27 +85,25 @@ public class PostController {
     }
 
     @PutMapping("/posts/{id}/upvote")
-    public ResponseEntity<PostDto> upvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
+    public ResponseEntity<DisplayPostDto> upvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
         long userId = (Long)session.getAttribute(UserController.User_Id);
         Post p = postServices.votePost(true, id, userId);
         postRepository.save(p);
-
-        PostDto dto = modelMapper.map(p, PostDto.class);
-        return ResponseEntity.ok(dto);
+        DisplayPostDto pDto = postServices.PostToDisplayPostDtoConversion(p);
+        return ResponseEntity.ok().body(pDto);
     }
     @PutMapping("/posts/{id}/downvote")
-    public ResponseEntity<PostDto> downvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
+    public ResponseEntity<DisplayPostDto> downvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
         long userId = (Long)session.getAttribute(UserController.User_Id);
         Post p = postServices.votePost(false, id, userId);
         postRepository.save(p);
-
-        PostDto dto = modelMapper.map(p, PostDto.class);
-        return ResponseEntity.ok(dto);
+        DisplayPostDto pDto = postServices.PostToDisplayPostDtoConversion(p);
+        return ResponseEntity.ok().body(pDto);
     }
     @GetMapping("/posts")
-    public ResponseEntity<List<PostWithoutOwnerDto>> getAllPosts(@RequestParam("sort_by_upvotes") boolean isByUpvotes) {
+    public ResponseEntity<List<DisplayPostDto>> getAllPosts(@RequestParam("sort_by_upvotes") boolean isByUpvotes) {
         //no login
         List<Post> allPosts;
         if(isByUpvotes) {
@@ -119,29 +111,24 @@ public class PostController {
         } else {
             allPosts = postRepository.getAllOrderByUploadDate();
         }
-        List<PostWithoutOwnerDto> postDtos = new ArrayList<>();
-        for (Post p : allPosts) {
-            postDtos.add(modelMapper.map(p, PostWithoutOwnerDto.class));
-        }
-        return ResponseEntity.ok().body(postDtos);
+        List<DisplayPostDto> pDtos = postServices.PostToDisplayPostDtoConversionCollection(allPosts);
+        return ResponseEntity.ok().body(pDtos);
     }
     @GetMapping("/posts/{id}")
-    public ResponseEntity<PostWithCategoryDto> getPostById(@PathVariable long id) {
+    public ResponseEntity<DisplayPostDto> getPostById(@PathVariable long id) {
         //no login
         Post p = postServices.getPostById(id);
-        PostWithCategoryDto pDto = postServices.PostToDtoConversion1(p);
+        DisplayPostDto pDto = postServices.PostToDisplayPostDtoConversion(p);
         return ResponseEntity.ok().body(pDto);
     }
     @GetMapping("/users/upvoted")
-    public ResponseEntity<List<PostWithoutOwnerDto>> getUpvotedPosts(HttpServletRequest request, HttpSession session) {
+    public ResponseEntity<List<DisplayPostDto>> getUpvotedPosts(HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
         long userId = (Long)session.getAttribute(UserController.User_Id);//todo method with Marto
-
         Set<Post> posts = userRepository.getById(userId).getUpvotedPosts();
 
-
-        List<PostWithoutOwnerDto> postsDto = postServices.sortPostsByDate(new ArrayList<>(posts)); //by date is not correct
-        return ResponseEntity.ok().body(postsDto);
+        List<DisplayPostDto> pDtos = postServices.PostToDisplayPostDtoConversionCollection(postServices.sortPostsByDate(new ArrayList<>(posts)));
+        return ResponseEntity.ok().body(pDtos);
     }
     @GetMapping("/post/allSavedPosts")
     public ResponseEntity<UserWithAllSavedPostDto> getAllSavedPost(HttpServletRequest httpServletRequest){
@@ -169,8 +156,7 @@ public class PostController {
     @DeleteMapping("/posts/{id}/delete")
     public void deletePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
-        postServices.getPostById(id);
-        Post p = postRepository.getById(id);
+        Post p = postServices.getPostById(id);
         if(p.getOwner().getId() == (Long)session.getAttribute(UserController.User_Id)) {//if current user is owner
             postRepository.deleteById(id);
         }
@@ -179,12 +165,12 @@ public class PostController {
         }
     }
     @GetMapping("/posts/search/{search}")
-    public ResponseEntity<List<PostWithoutOwnerDto>> searchPosts(@PathVariable String search) {
+    public ResponseEntity<List<DisplayPostDto>> searchPosts(@PathVariable String search) {
         //serialize "search string" into keywords
         //search in the descriptions of the posts for each word
         //return posts sorted by most common keywords found first
 
-        List<PostWithoutOwnerDto> result = postServices.searchPostGenerator(search);
+        List<DisplayPostDto> result = postServices.searchPostGenerator(search);
 
        return ResponseEntity.ok().body(result);
     }

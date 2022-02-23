@@ -3,6 +3,7 @@ package com.example.springproject.controller;
 import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
 import com.example.springproject.dto.newDtos.comment.AllCommentsOnPostDto;
+import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.model.Comment;
 import com.example.springproject.model.User;
 import com.example.springproject.repositories.CommentRepository;
@@ -72,12 +73,17 @@ public class CommentController {
         return ResponseEntity.ok(modelMapper.map(user, UserWithCommentsDto.class));
     }
 
+//    @GetMapping("comment/getAllPosts")
+//    public ResponseEntity<Set<PostWithoutCommentPostDto>> getAllCommentPosts(HttpServletRequest request) {
+//        ValidateData.validatorLogin(request);
+//        return ResponseEntity.ok(commentServices.getAllCommentPosts(request));
+//    }
     @GetMapping("comment/getAllPosts")
-    public ResponseEntity<Set<PostWithoutCommentPostDto>> getAllCommentPosts(HttpServletRequest request) {
+        public ResponseEntity<Set<DisplayPostDto>> getAllCommentPosts(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        return ResponseEntity.ok(commentServices.getAllCommentPosts(request));
+        Set<DisplayPostDto> commentedPosts = commentServices.getAllCommentPosts(request);
+        return ResponseEntity.ok(commentedPosts);
     }
-
     @GetMapping("/allCommentByVote/post")
     public AllCommentsOnPostDto getAllCommentsByUpVote(@RequestParam(name = "id") long postId) {
         return commentServices.getAllCommentByPostId(postId);

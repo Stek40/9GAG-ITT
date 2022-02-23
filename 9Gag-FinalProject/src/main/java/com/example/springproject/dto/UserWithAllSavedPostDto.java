@@ -13,5 +13,5 @@ public class UserWithAllSavedPostDto {
 
     private long id;
     private String full_name;
-    private List<PostWithoutOwnerDto> savedPosts;
+    private List<PostWithoutOwnerDto> savedPosts; //to be changed with new DTO
 }

@@ -1,11 +1,14 @@
 package com.example.springproject.services;
 
+import com.example.springproject.controller.UserController;
 import com.example.springproject.dto.CategoryWithoutPostsDto;
-import com.example.springproject.dto.PostWithCategoryDto;
-import com.example.springproject.dto.PostWithoutOwnerDto;
+//import com.example.springproject.dto.PostWithCategoryDto;
+//import com.example.springproject.dto.PostWithoutOwnerDto;
 import com.example.springproject.dto.UserWithoutPostsDto;
+import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
+import com.example.springproject.exceptions.UnauthorizedException;
 import com.example.springproject.model.Post;
 import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
@@ -144,29 +147,27 @@ public class PostServices {
         throw new NotFoundException("Post not found !");
     }
 
-    public List<PostWithoutOwnerDto> sortPostsByDate(List<Post> allPosts) {
-        List<PostWithoutOwnerDto> posts = new ArrayList<>();
-        for (Post p : allPosts) {
-            posts.add(modelMapper.map(p,PostWithoutOwnerDto.class));
-        }
-        posts.sort((p1, p2) -> {
+    public List<Post> sortPostsByDate(List<Post> allPosts) {
+        allPosts.sort((p1, p2) -> {
             return p2.getUploadDate().compareTo(p1.getUploadDate());
         });
-        return posts;
+        return allPosts;
     }
 
-    public PostWithCategoryDto PostToDtoConversion1(Post p) {
-        PostWithCategoryDto pDto = modelMapper.map(p, PostWithCategoryDto.class);
+    public DisplayPostDto PostToDisplayPostDtoConversion(Post p) {
+        DisplayPostDto pDto = modelMapper.map(p, DisplayPostDto.class);
         pDto.setUserId(p.getOwner().getId());
-        pDto.setOwner(modelMapper.map(p.getOwner(), UserWithoutPostsDto.class));
-        pDto.setCategory(modelMapper.map(p.getCategory(), CategoryWithoutPostsDto.class));
+        pDto.setCategory(p.getCategory().getName());
         return pDto;
     }
-    public PostWithoutOwnerDto PostToDtoConversion2(Post p) {
-        PostWithoutOwnerDto pDto = modelMapper.map(p, PostWithoutOwnerDto.class);
-        return pDto;
+    public List<DisplayPostDto> PostToDisplayPostDtoConversionCollection(List<Post> posts) {
+        List<DisplayPostDto> pDtos = new ArrayList<>();
+        for (Post p : posts) {
+            pDtos.add(PostToDisplayPostDtoConversion(p));
+        }
+        return pDtos;
     }
-    public List<PostWithoutOwnerDto> searchPostGenerator(String search) {
+    public List<DisplayPostDto> searchPostGenerator(String search) {
         ArrayList<String> words = this.extractWords(search);
 
         ArrayList<String> descriptions = new ArrayList<>(postRepository.findAllPostDescriptions());
@@ -189,16 +190,17 @@ public class PostServices {
         }
         System.out.println("@@@@@@@@@@@@");
         SortedSet<Map.Entry<Long, Integer>> sortedIds = this.sortIdsByFoundWords(numberOfFoundWords);
-        List<PostWithoutOwnerDto> result = this.foundPostsFromSearch(sortedIds);
+        List<DisplayPostDto> result = this.foundPostsFromSearch(sortedIds);
        return result;
     }
 
-    private List<PostWithoutOwnerDto> foundPostsFromSearch(SortedSet<Map.Entry<Long, Integer>> sortedIds) {
-        List<PostWithoutOwnerDto> result = new ArrayList<>();
+    private List<DisplayPostDto> foundPostsFromSearch(SortedSet<Map.Entry<Long, Integer>> sortedIds) {
+        List<DisplayPostDto> result = new ArrayList<>();
         for (Map.Entry<Long, Integer> e : sortedIds) {
             System.out.println(e.getKey() + " " + e.getValue()); //test print
             if(e.getValue() > 0) {
-                result.add(this.PostToDtoConversion2(postRepository.getById(e.getKey())));
+                //result.add(this.PostToDtoConversion2(postRepository.getById(e.getKey())));
+                result.add(this.PostToDisplayPostDtoConversion(postRepository.getById(e.getKey())));
             }
         }
         return result;
@@ -253,5 +255,9 @@ public class PostServices {
         File destination = new File("media" + File.separator + "postMedia" + File.separator + nameAndExt);
         Files.copy(file.getInputStream(), Path.of(destination.toURI()));
         return nameAndExt;
+    }
+
+    public ArrayList<Post> postsSetToList(Set<Post> set) {
+        return new ArrayList<>(set);
     }
 }

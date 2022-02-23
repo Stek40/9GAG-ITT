@@ -14,5 +14,5 @@ public class UserCreatedPostsByDate {
 
     private String full_name;
     private long id;
-    private List<PostWithoutCommentPostDto> posts;
+    private List<PostWithoutCommentPostDto> posts;// must be changed with new DTO
 }

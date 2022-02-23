@@ -12,5 +12,5 @@ import java.util.Set;
 public class CategoryWithPostsDto {
     private long id;
     private String name;
-    private Set<PostWithOwnerAndWithoutCategoryDto> posts;
+    private Set<PostWithOwnerAndWithoutCategoryDto> posts; // must be changed with new DTO
 }

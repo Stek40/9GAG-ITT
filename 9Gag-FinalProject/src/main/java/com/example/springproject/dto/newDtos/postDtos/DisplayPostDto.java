@@ -1,4 +1,4 @@
-package com.example.springproject.dto;
+package com.example.springproject.dto.newDtos.postDtos;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,16 +8,14 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class PostWithOwnerAndCategoryDto {
+public class DisplayPostDto {
 
     private long id;
     private String description;
     private String mediaUrl;
-    private int categoryId;
     private int upvotes;
     private int downvotes;
     private long userId;
     private LocalDateTime uploadDate;
-    private UserWithoutPostsDto owner;
-    private CategoryWithoutPostsDto category;
+    private String category;
 }

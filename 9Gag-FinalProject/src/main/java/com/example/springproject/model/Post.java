@@ -23,8 +23,6 @@ public class Post {
     @Column
     private String mediaUrl;
     @Column
-    //private int categoryId;
-    //@Column
     private int upvotes;
     @Column
     private int downvotes;
@@ -60,9 +58,4 @@ public class Post {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> savedUser;
-
-
-
-
-
 }

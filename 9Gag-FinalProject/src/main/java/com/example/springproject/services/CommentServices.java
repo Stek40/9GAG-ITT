@@ -3,6 +3,7 @@ package com.example.springproject.services;
 import com.example.springproject.dto.CommentWithoutOwnerDto;
 import com.example.springproject.dto.PostWithoutCommentPostDto;
 import com.example.springproject.dto.newDtos.comment.AllCommentsOnPostDto;
+import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
@@ -40,6 +41,8 @@ public class CommentServices {
     private CommentRepository commentRepository;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private PostServices postServices;
 
 
     public Comment createComment(MultipartFile file, String text, long postId, long userId) {
@@ -150,12 +153,22 @@ public class CommentServices {
         throw new UnauthorizedException("Тhe user didn't  vote !");
     }
 
-    public Set<PostWithoutCommentPostDto> getAllCommentPosts(HttpServletRequest request) {
+//    public Set<PostWithoutCommentPostDto> getAllCommentPosts(HttpServletRequest request) {
+//        User user = userRepository.getUserByRequest(request);
+//        Set<PostWithoutCommentPostDto> allCommentedPosts = new TreeSet<>();
+//        for (Comment c : user.getComments()) {
+//            PostWithoutCommentPostDto postWithoutCommentPostDto = modelMapper.map(c.getPost(), PostWithoutCommentPostDto.class);
+//            allCommentedPosts.add(postWithoutCommentPostDto);
+//        }
+//        return allCommentedPosts;
+//    }
+    public Set<DisplayPostDto> getAllCommentPosts(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
-        Set<PostWithoutCommentPostDto> allCommentedPosts = new TreeSet<>();
+        Set<DisplayPostDto> allCommentedPosts = new TreeSet<>((p1, p2) -> {
+            return p2.getUploadDate().compareTo(p1.getUploadDate());
+        });
         for (Comment c : user.getComments()) {
-            PostWithoutCommentPostDto postWithoutCommentPostDto = modelMapper.map(c.getPost(), PostWithoutCommentPostDto.class);
-            allCommentedPosts.add(postWithoutCommentPostDto);
+            allCommentedPosts.add(postServices.PostToDisplayPostDtoConversion(c.getPost()));
         }
         return allCommentedPosts;
     }
