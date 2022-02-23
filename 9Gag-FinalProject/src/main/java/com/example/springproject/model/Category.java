@@ -20,6 +20,13 @@ public class Category {
     private String name;
     @OneToMany(mappedBy = "category")
     private Set<Post> posts;
+    @ManyToMany()
+    @JoinTable(
+            name = "users_add_favourite_categories",
+            joinColumns = @JoinColumn (name ="categories_id" ),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> users;
 
 
 }

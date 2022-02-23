@@ -5,8 +5,11 @@ import com.example.springproject.dto.*;
 import com.example.springproject.dto.newDtos.user.UserCreatedPostsByDate;
 import com.example.springproject.dto.newDtos.user.UserRegisterDto;
 import com.example.springproject.dto.newDtos.user.UserResponseDtoRegister;
+import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.UnauthorizedException;
+import com.example.springproject.model.Category;
 import com.example.springproject.model.User;
+import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.UserRepository;
 import com.example.springproject.services.UserServices;
 import org.modelmapper.ModelMapper;
@@ -32,7 +35,20 @@ public class UserController {
     private ModelMapper modelMapper;
     @Autowired
     private ValidateData data;
+    @Autowired
+    CategoryRepository categoryRepository;
 
+
+    @PostMapping("/users/addFavouriteCategories")
+    public ResponseEntity<UserResponseDto> addFavouriteCategories(@RequestParam (name = "categoryId") long cId, HttpServletRequest request ){
+        validateLogin(request);
+        return  userServices.addCategory(cId,request);
+    }
+    @PostMapping("/users/removeFavouriteCategories")
+    public ResponseEntity<UserResponseDto> removeFavouriteCategories(@RequestParam (name = "categoryId") long cId, HttpServletRequest request ){
+        validateLogin(request);
+        return  userServices.removeCategory(cId,request);
+    }
 
     @PostMapping("/users/register")
     public ResponseEntity<UserResponseDtoRegister> register(@RequestBody UserRegisterDto u) {

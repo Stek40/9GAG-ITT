@@ -9,7 +9,9 @@ import com.example.springproject.dto.newDtos.user.UserResponseDtoRegister;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.DateTimeParseException;
 import com.example.springproject.exceptions.NotFoundException;
+import com.example.springproject.model.Category;
 import com.example.springproject.model.User;
+import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.CountryRepository;
 import com.example.springproject.repositories.UserRepository;
 import org.apache.commons.io.FilenameUtils;
@@ -41,6 +43,8 @@ public class UserServices {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     public static final String LOGGED = "logged";
     public static final String LOGGED_FROM = "loggedFrom";
@@ -280,4 +284,35 @@ public class UserServices {
     }
 
 
+    public ResponseEntity<UserResponseDto> addCategory(long cId, HttpServletRequest request) {
+        User user = userRepository.getUserByRequest(request);
+        Optional<Category> category = categoryRepository.findById(cId);
+        if (category.isPresent()){
+            if (user.getCategories().contains(category.get())){
+                throw new BadRequestException("Category already exist !");
+            }
+        user.getCategories().add(categoryRepository.getById(cId));
+        userRepository.save(user);
+        category.get().getUsers().add(user);
+        categoryRepository.save(category.get());
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+    }
+        throw new NotFoundException("Category not found !");
+    }
+
+    public ResponseEntity<UserResponseDto> removeCategory(long cId, HttpServletRequest request) {
+        User user = userRepository.getUserByRequest(request);
+        Optional<Category> category = categoryRepository.findById(cId);
+        if (category.isPresent()){
+            if (!user.getCategories().contains(category.get())){
+                throw new BadRequestException("Category is not in the favorites !");
+            }
+            user.getCategories().remove(category.get());
+            userRepository.save(user);
+            category.get().getUsers().remove(user);
+            categoryRepository.save(category.get());
+            return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        }
+        throw new NotFoundException("Category not found !");
+    }
 }
