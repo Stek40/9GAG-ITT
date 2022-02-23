@@ -244,6 +244,9 @@ public class PostServices {
     }
 
     public String saveMedia(MultipartFile file) throws IOException {
+        if(file.isEmpty()) {
+            throw new NotFoundException("Media is missing.");
+        }
         String name = String.valueOf(System.nanoTime());
         String ext = FilenameUtils.getExtension(file.getOriginalFilename());
         String nameAndExt = name + "." + ext;

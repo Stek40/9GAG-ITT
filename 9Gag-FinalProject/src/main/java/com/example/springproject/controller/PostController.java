@@ -2,9 +2,7 @@ package com.example.springproject.controller;
 
 import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
-import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
-import com.example.springproject.model.Comment;
 import com.example.springproject.model.Post;
 import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
@@ -12,27 +10,18 @@ import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
 import com.example.springproject.services.PostServices;
 import lombok.SneakyThrows;
-import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import java.lang.reflect.Type;
 import java.util.*;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-
-import static java.awt.SystemColor.text;
 
 
 @RestController
@@ -69,11 +58,6 @@ public class PostController {
        return ResponseEntity.ok(modelMapper.map(post,PostWithoutCommentPostDto.class));
    }
 
-    @GetMapping("/posts/getById/{id}")
-    public Post getPostById(@PathVariable int id){
-        return postRepository.getById((long) id);
-    }
-
     @SneakyThrows
     @PostMapping("new_post")
     public ResponseEntity<PostDto> createPost(@RequestParam(name = "file") MultipartFile file,
@@ -90,6 +74,11 @@ public class PostController {
         PostDto pDto = modelMapper.map(p, PostDto.class);
         pDto.setUserId(userId);
         return ResponseEntity.status(HttpStatus.OK).body(pDto);
+    }
+
+    @GetMapping("/posts/getById/{id}")
+    public Post getPostById(@PathVariable int id){
+        return postRepository.getById((long) id);
     }
 
     @PutMapping("/save_post")
@@ -128,7 +117,7 @@ public class PostController {
         return ResponseEntity.ok(dto);
     }
     @GetMapping("/posts")
-    public ResponseEntity<List<PostWithoutOwnerDto>> getAllPosts(@RequestParam("sort by upvotes") boolean isByUpvotes) {
+    public ResponseEntity<List<PostWithoutOwnerDto>> getAllPosts(@RequestParam("sort_by_upvotes") boolean isByUpvotes) {
         //no login
         List<Post> allPosts;
         if(isByUpvotes) {
