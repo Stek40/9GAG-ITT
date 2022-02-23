@@ -1,5 +1,6 @@
 package com.example.springproject.services;
 
+import com.example.springproject.controller.Email;
 import com.example.springproject.dto.UserEditDto;
 import com.example.springproject.dto.UserLoginDto;
 import com.example.springproject.dto.UserResponseDto;
@@ -9,12 +10,16 @@ import com.example.springproject.dto.newDtos.user.UserResponseDtoRegister;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.DateTimeParseException;
 import com.example.springproject.exceptions.NotFoundException;
+import com.example.springproject.exceptions.UnauthorizedException;
 import com.example.springproject.model.Category;
 import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.CountryRepository;
 import com.example.springproject.repositories.UserRepository;
+import jdk.jshell.Snippet;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.coyote.Response;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +35,7 @@ import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,6 +51,8 @@ public class UserServices {
     private ModelMapper modelMapper;
     @Autowired
     private CategoryRepository categoryRepository;
+    @Autowired
+    private Email sendEmail;
 
     public static final String LOGGED = "logged";
     public static final String LOGGED_FROM = "loggedFrom";
@@ -129,7 +137,10 @@ public class UserServices {
         user.setFull_name(full_name);
         user.setPassword(passwordEncoder.encode(password));
         user.setUsername(username);
+        String randomStringUtils = RandomStringUtils.randomAlphabetic(10,16);
+        user.setToken(randomStringUtils);
         userRepository.save(user);
+        sendEmail.SendEmail(user.getEmail(),randomStringUtils,user.getId());
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDtoRegister.class));
     }
 
@@ -143,8 +154,12 @@ public class UserServices {
 
     public ResponseEntity<UserResponseDto> logIn(UserLoginDto userDto,HttpServletRequest request) {
         User user = userRepository.findUserByUsername(userDto.getUsername());
+
         if (user == null) {
             throw new BadRequestException("Incorrect username or password!");
+        }
+        if (user.getToken() != null){
+            throw new BadRequestException("Please confirm your email !");
         }
         if (userDto.getUsername() == null || userDto.getUsername().isBlank()) {
             throw new BadRequestException("Username is mandatory !");
@@ -213,6 +228,9 @@ public class UserServices {
         User user = userRepository.getUserByRequest(request);
         if (userRepository.findUserByUsername(dto.getNew_username()) != null) {
             throw new BadRequestException("Username already exist !");
+        }
+        if (!dto.getNew_username().matches(regexUsername)){
+            throw new BadRequestException("Invalid username !");
         }
         user.setUsername(dto.getNew_username());
         userRepository.save(user);
@@ -314,5 +332,31 @@ public class UserServices {
             return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
         }
         throw new NotFoundException("Category not found !");
+    }
+
+    public void sendEmailPassword(UserEditDto userEditDto) {
+        String username = userEditDto.getUsername();
+        String emailUser = userEditDto.getEmail();
+       User user = userRepository.findUserByUsernameOrEmail(username,emailUser);
+//       if (user != null){
+//           email.SendEmail(user.getEmail() );
+//
+//       }
+
+    }
+
+    public ResponseEntity<String> verifyUser(long id, String token) {
+        Optional<User> user = userRepository.findById(id);
+        if (user.isPresent()){
+            if (user.get().getToken().equals(token)){
+                user.get().setToken(null);
+                userRepository.save(user.get());
+                return ResponseEntity.ok("Successfully verified your account please login !");
+            }
+            throw new UnauthorizedException("Please check email !");
+
+
+        }
+        throw new NotFoundException("User not found !");
     }
 }

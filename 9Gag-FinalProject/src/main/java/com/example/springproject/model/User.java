@@ -44,6 +44,8 @@ public class User {
     private boolean hidden;
     @Column
     private String profile_picture_url;
+    @Column
+    private String token;
     @OneToMany(mappedBy = "owner")
     private Set<Post> posts;
     @OneToMany(mappedBy = "commentOwner")

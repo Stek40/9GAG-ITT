@@ -14,6 +14,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     User findUserByEmail(String email);
 
     User findUserByUsername(String username);
+    User findUserByUsernameOrEmail(String username,String email);
 
      default User getUserByRequest(HttpServletRequest request){
         long id = (long) request.getSession().getAttribute(UserController.User_Id);

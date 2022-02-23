@@ -39,15 +39,28 @@ public class UserController {
     CategoryRepository categoryRepository;
 
 
-    @PostMapping("/users/addFavouriteCategories")
-    public ResponseEntity<UserResponseDto> addFavouriteCategories(@RequestParam (name = "categoryId") long cId, HttpServletRequest request ){
-        validateLogin(request);
-        return  userServices.addCategory(cId,request);
+ @GetMapping("/users/verified")
+   public ResponseEntity<String> verifiedProfile(@RequestParam (name = "id") long id, @RequestParam (name = "?token") String token){
+
+     return userServices.verifyUser(id,token);
+ }
+
+    @PostMapping("/users/forgottenPassword")
+    public ResponseEntity<UserResponseDto> sendEmail(@RequestBody UserEditDto userEditDto) {
+       userServices.sendEmailPassword(userEditDto);
+      return null;
     }
-    @PostMapping("/users/removeFavouriteCategories")
-    public ResponseEntity<UserResponseDto> removeFavouriteCategories(@RequestParam (name = "categoryId") long cId, HttpServletRequest request ){
+
+    @PostMapping("/users/addFavouriteCategories")
+    public ResponseEntity<UserResponseDto> addFavouriteCategories(@RequestParam(name = "categoryId") long cId, HttpServletRequest request) {
         validateLogin(request);
-        return  userServices.removeCategory(cId,request);
+        return userServices.addCategory(cId, request);
+    }
+
+    @PostMapping("/users/removeFavouriteCategories")
+    public ResponseEntity<UserResponseDto> removeFavouriteCategories(@RequestParam(name = "categoryId") long cId, HttpServletRequest request) {
+        validateLogin(request);
+        return userServices.removeCategory(cId, request);
     }
 
     @PostMapping("/users/register")
@@ -60,6 +73,7 @@ public class UserController {
         ValidateData.validatorLogin(request);
         return userServices.getAllCreatedPosts(request);
     }
+
     @GetMapping("users/posts/byVote")
     public ResponseEntity<UserCreatedPostsByDate> getUserWithPostsByVote(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
@@ -72,7 +86,6 @@ public class UserController {
     }
 
 
-
     @GetMapping("users")
     public ResponseEntity<UserResponseDto> getUserById(@RequestParam("id") int id) {
         return userServices.getById(id);
@@ -80,7 +93,7 @@ public class UserController {
 
     @PostMapping("/users/login")
     public ResponseEntity<UserResponseDto> userLogin(@RequestBody UserLoginDto userLoginDto, HttpServletRequest request) {
-        return userServices.logIn(userLoginDto,request);
+        return userServices.logIn(userLoginDto, request);
     }
 
     @PostMapping("/users/logout")
@@ -98,10 +111,10 @@ public class UserController {
     }
 
     @PutMapping("/users/edit/profilePicture")
-    public ResponseEntity<UserResponseDto> changeProfilePicture(@RequestParam(name = "file")MultipartFile file, HttpServletRequest request) {
-       ValidateData.validatorLogin(request);
-       User user = userServices.changeProfilePicture(file,request);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+    public ResponseEntity<UserResponseDto> changeProfilePicture(@RequestParam(name = "file") MultipartFile file, HttpServletRequest request) {
+        ValidateData.validatorLogin(request);
+        User user = userServices.changeProfilePicture(file, request);
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
     @PutMapping("/users/edit/changeEmail")
@@ -117,36 +130,40 @@ public class UserController {
         User user = userServices.changePassword(editDto, request);
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
+
     @PutMapping("/users/changeUsername")
-    public ResponseEntity<UserResponseDto> changeUsername(@RequestBody UserEditDto userEditDto, HttpServletRequest request){
+    public ResponseEntity<UserResponseDto> changeUsername(@RequestBody UserEditDto userEditDto, HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         User user = userServices.changeUsername(userEditDto, request);
 
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
+
     @PutMapping("/users/sensitiveContent")
-    public ResponseEntity<UserResponseDto> setSensitiveContent(@RequestBody UserEditDto userEditDto,HttpServletRequest request){
+    public ResponseEntity<UserResponseDto> setSensitiveContent(@RequestBody UserEditDto userEditDto, HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         User user = userServices.setSensitiveContentTrue(userEditDto, request);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
+
     @PutMapping("/users/isHidden")
-    public ResponseEntity<UserResponseDto> setIsHidden(HttpServletRequest request){
+    public ResponseEntity<UserResponseDto> setIsHidden(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         User user = userServices.setIsHidden(request);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
     @PutMapping("/users/isPublic")
-    public ResponseEntity<UserResponseDto> setIsPublic(HttpServletRequest request){
+    public ResponseEntity<UserResponseDto> setIsPublic(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         User user = userServices.setIsPublic(request);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
+
     @PostMapping("/users/delete")
-    public ResponseEntity<UserResponseDto> deleteUser(@RequestBody UserEditDto editDto, HttpServletRequest request){
+    public ResponseEntity<UserResponseDto> deleteUser(@RequestBody UserEditDto editDto, HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User user = userServices.deleteUser(editDto,request);
+        User user = userServices.deleteUser(editDto, request);
         request.getSession().invalidate();
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }

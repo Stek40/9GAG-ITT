@@ -10,7 +10,9 @@ import lombok.Setter;
 public class UserEditDto {
 
     private long id;
+    private String email;
     private String password;
+    private String emailPassword;
     private String newPassword;
     private String confirmNewPassword;
     private String newEmail;
