@@ -14,7 +14,7 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Post implements Comparable<Post> {
+public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -64,8 +64,5 @@ public class Post implements Comparable<Post> {
 
 
 
-    @Override
-    public int compareTo(Post o) {
-        return 1;
-    }
+
 }

@@ -42,19 +42,18 @@ public class CommentServices {
     private ModelMapper modelMapper;
 
 
-
     public Comment createComment(MultipartFile file, String text, long postId, long userId) {
 
-        if (text == null && file == null){
+        if (text == null && file == null) {
             throw new BadRequestException("Please enter a comment");
         }
         Optional<Post> post = postRepository.findById(postId);
         Optional<User> commentOwner = userRepository.findById(userId);
-        if (post.isPresent()){
+        if (post.isPresent()) {
             Comment comment = new Comment();
-            if (!file.isEmpty()){
+            if (!file.isEmpty()) {
                 String ext = FilenameUtils.getExtension(file.getOriginalFilename());
-                String name = System.nanoTime() +"."+ ext;
+                String name = System.nanoTime() + "." + ext;
                 try {
                     Files.copy(file.getInputStream(), new File("commentImages" + File.separator + name).toPath());
                     comment.setMediaUrl(name);
@@ -63,7 +62,7 @@ public class CommentServices {
                 }
 
             }
-            if (text != null){
+            if (text != null) {
                 comment.setText(text);
             }
 
@@ -83,52 +82,56 @@ public class CommentServices {
     }
 
     public Comment upVoteComment(long commentId, HttpServletRequest request) {
-       User user = userRepository.getUserByRequest(request);
-      Comment comment = commentRepository.getById(commentId);
-        if (comment.getDownVoters().contains(user)){
+        User user = userRepository.getUserByRequest(request);
+        Comment comment = commentRepository.getById(commentId);
+        if (comment.getDownVoters().contains(user)) {
             comment.getDownVoters().remove(user);
             comment.setDownvotes(comment.getDownVoters().size());
             commentRepository.save(comment);
         }
-      if (!comment.getUppVoters().contains(user)){
-          comment.getUppVoters().add(user);
-          comment.setUpvotes(comment.getUppVoters().size());
-          commentRepository.save(comment);
-          user.getUpVoteComments().add(comment);
-          return comment;
-      }
+        if (!comment.getUppVoters().contains(user)) {
+            comment.getUppVoters().add(user);
+            comment.setUpvotes(comment.getUppVoters().size());
+            commentRepository.save(comment);
+            user.getUpVoteComments().add(comment);
+            return comment;
+        }
 
         throw new BadRequestException("The user already upvote this comment !");
     }
+
     public Comment dowVoteComment(long commentId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
-        Comment comment = commentRepository.getById(commentId);
-        if (comment.getUppVoters().contains(user)) {
-            comment.getUppVoters().remove(user);
-            comment.setUpvotes(comment.getUppVoters().size());
-            user.getUpVoteComments().remove(comment);
-            commentRepository.save(comment);
-            userRepository.save(user);
-        }
-        if (!comment.getDownVoters().contains(user)) {
-            user.getDownVote().add(comment);
-            comment.getDownVoters().add(user);
-            comment.setDownvotes(comment.getDownVoters().size());
-            commentRepository.save(comment);
-            userRepository.save(user);
-            return comment;
+        Optional<Comment> comment = commentRepository.findById(commentId);
+        if (comment.isPresent()) {
+            if (comment.get().getUppVoters().contains(user)) {
+                comment.get().getUppVoters().remove(user);
+                comment.get().setUpvotes(comment.get().getUppVoters().size());
+                user.getUpVoteComments().remove(comment.get());
+                commentRepository.save(comment.get());
+                userRepository.save(user);
+            }
+            if (!comment.get().getDownVoters().contains(user)) {
+                user.getDownVote().add(comment.get());
+                comment.get().getDownVoters().add(user);
+                comment.get().setDownvotes(comment.get().getDownVoters().size());
+                commentRepository.save(comment.get());
+                userRepository.save(user);
+                return comment.get();
 
+            }
+            throw new BadRequestException("The user already downvote this comment !");
         }
-        throw new BadRequestException("The user already downvote this comment !");
+        throw new NotFoundException("Comment not found !");
     }
 
     public Comment removeVot(long commentId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         Optional<Comment> comment = commentRepository.findById(commentId);
-        if (!comment.isPresent()){
+        if (!comment.isPresent()) {
             throw new NotFoundException("Comment not found !");
         }
-        if (comment.get().getDownVoters().contains(user) ){
+        if (comment.get().getDownVoters().contains(user)) {
             comment.get().getDownVoters().remove(user);
             comment.get().setDownvotes(comment.get().getDownVoters().size());
             user.getDownVote().remove(comment);
@@ -136,7 +139,7 @@ public class CommentServices {
             commentRepository.save(comment.get());
             return comment.get();
         }
-        if (comment.get().getUppVoters().contains(user) ){
+        if (comment.get().getUppVoters().contains(user)) {
             comment.get().getUppVoters().remove(user);
             comment.get().setUpvotes(comment.get().getUppVoters().size());
             user.getUpVoteComments().remove(comment);
@@ -150,8 +153,8 @@ public class CommentServices {
     public Set<PostWithoutCommentPostDto> getAllCommentPosts(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         Set<PostWithoutCommentPostDto> allCommentedPosts = new TreeSet<>();
-        for (Comment c:user.getComments()) {
-            PostWithoutCommentPostDto postWithoutCommentPostDto = modelMapper.map(c.getPost(),PostWithoutCommentPostDto.class);
+        for (Comment c : user.getComments()) {
+            PostWithoutCommentPostDto postWithoutCommentPostDto = modelMapper.map(c.getPost(), PostWithoutCommentPostDto.class);
             allCommentedPosts.add(postWithoutCommentPostDto);
         }
         return allCommentedPosts;
@@ -159,10 +162,9 @@ public class CommentServices {
 
     public AllCommentsOnPostDto getAllCommentByPostId(long postId) {
         Optional<Post> post = postRepository.findById(postId);
-        if (post.isPresent()){
+        if (post.isPresent()) {
             AllCommentsOnPostDto allComments = modelMapper.map(post.get(), AllCommentsOnPostDto.class);
-            allComments.setComments(allComments.getComments().stream().sorted((c1,c2)-> (int) (c2.getUpvotes() - c1.getUpvotes())).collect(Collectors.toList()));
-
+            allComments.setComments(allComments.getComments().stream().sorted((c1, c2) -> (int) (c2.getUpvotes() - c1.getUpvotes())).collect(Collectors.toList()));
             return allComments;
         }
         throw new NotFoundException("Post not found !");
@@ -171,9 +173,9 @@ public class CommentServices {
 
     public AllCommentsOnPostDto getAllCommentByPostDate(long postId) {
         Optional<Post> post = postRepository.findById(postId);
-        if (post.isPresent()){
+        if (post.isPresent()) {
             AllCommentsOnPostDto allComments = modelMapper.map(post.get(), AllCommentsOnPostDto.class);
-            allComments.setComments(allComments.getComments().stream().sorted((c1,c2)-> (c2.getDateTime().compareTo(c1.getDateTime()))).collect(Collectors.toList()));
+            allComments.setComments(allComments.getComments().stream().sorted((c1, c2) -> (c2.getDateTime().compareTo(c1.getDateTime()))).collect(Collectors.toList()));
 
             return allComments;
         }

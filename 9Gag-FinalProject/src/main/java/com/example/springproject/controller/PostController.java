@@ -31,6 +31,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.awt.SystemColor.text;
 
@@ -61,12 +62,6 @@ public class PostController {
       ArrayList<PostWithoutCommentPostDto> allPosts =modelMapper.map(posts, (Type) PostWithoutCommentPostDto.class);
      return ResponseEntity.ok(modelMapper.map(posts,PostWithoutCommentPostDto.class));
 
-   }
-   @GetMapping("/aide")
-   public ResponseEntity<PostWithoutCommentPostDto> getPostWithComment(){
-       Post post = postRepository.getById(2L);
-       System.out.println(post.getComments().size() + "--------------------------");
-       return ResponseEntity.ok(modelMapper.map(post,PostWithoutCommentPostDto.class));
    }
 
     @GetMapping("/posts/getById/{id}")
@@ -156,15 +151,27 @@ public class PostController {
 
         Set<Post> posts = userRepository.getById(userId).getUpvotedPosts();
 
+
         List<PostWithoutOwnerDto> postsDto = postServices.sortPostsByDate(new ArrayList<>(posts)); //by date is not correct
         return ResponseEntity.ok().body(postsDto);
     }
     @GetMapping("/post/allSavedPosts")
     public ResponseEntity<UserWithAllSavedPostDto> getAllSavedPost(HttpServletRequest httpServletRequest){
         ValidateData.validatorLogin(httpServletRequest);
-
         User user = userRepository.getById((Long) httpServletRequest.getSession().getAttribute(UserController.User_Id));
-        return ResponseEntity.ok(modelMapper.map(user,UserWithAllSavedPostDto.class));
+        UserWithAllSavedPostDto userWithAllSavedPostDto = modelMapper.map(user,UserWithAllSavedPostDto.class);
+        userWithAllSavedPostDto.setSavedPosts(userWithAllSavedPostDto.getSavedPosts()
+                .stream().sorted((p1,p2)-> p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
+        return ResponseEntity.ok(userWithAllSavedPostDto);
+    }
+    @GetMapping("/post/allSavedPostsByVote")
+    public ResponseEntity<UserWithAllSavedPostDto> getAllSavedPostByVote(HttpServletRequest httpServletRequest) {
+        ValidateData.validatorLogin(httpServletRequest);
+        User user = userRepository.getById((Long) httpServletRequest.getSession().getAttribute(UserController.User_Id));
+        UserWithAllSavedPostDto userWithAllSavedPostDto = modelMapper.map(user, UserWithAllSavedPostDto.class);
+        userWithAllSavedPostDto.setSavedPosts(userWithAllSavedPostDto.getSavedPosts()
+                .stream().sorted((p1, p2) -> p2.getUpvotes() - (p1.getUpvotes())).collect(Collectors.toList()));
+        return ResponseEntity.ok(userWithAllSavedPostDto);
     }
     @GetMapping("/users/comments")
     public ResponseEntity<List<Post>> getCommentedPosts(@RequestParam("id") long id, HttpServletRequest request) {

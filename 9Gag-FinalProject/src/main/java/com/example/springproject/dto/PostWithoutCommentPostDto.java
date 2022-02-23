@@ -15,6 +15,8 @@ public class PostWithoutCommentPostDto implements Comparable<PostWithoutCommentP
     private String description;
     private long id;
     private LocalDateTime uploadDate;
+    private int upvotes;
+    private int downvotes;
     private Set<CommentWithOutPostDto> comments;
 
 

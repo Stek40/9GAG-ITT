@@ -129,10 +129,10 @@ public class UserServices {
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDtoRegister.class));
     }
 
-    public ResponseEntity<UserResponseDtoRegister> getById(long id) {
+    public ResponseEntity<UserResponseDto> getById(long id) {
         Optional<User> opt = userRepository.findById(id);
         if (opt.isPresent()) {
-            return ResponseEntity.ok(modelMapper.map(opt.get(),UserResponseDtoRegister.class));
+            return ResponseEntity.ok(modelMapper.map(opt.get(),UserResponseDto.class));
         }
         throw new NotFoundException("User not found");
     }
@@ -224,6 +224,7 @@ public class UserServices {
 
     public User setIsHidden(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
+
         user.setHidden(true);
         userRepository.save(user);
         return user;
@@ -261,4 +262,22 @@ public class UserServices {
                 stream().sorted((p1,p2)->p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
         return ResponseEntity.ok(userAllPosts);
     }
+    public ResponseEntity<UserCreatedPostsByDate> getAllCreatedPostsByVote(HttpServletRequest request) {
+        User user = userRepository.getById(userRepository.getIdByRequest(request));
+        UserCreatedPostsByDate userAllPosts = modelMapper.map(user,UserCreatedPostsByDate.class);
+        userAllPosts.setPosts(userAllPosts.getPosts().
+                stream().sorted((p1,p2)->p2.getUpvotes()-(p1.getUpvotes())).collect(Collectors.toList()));
+        return ResponseEntity.ok(userAllPosts);
+    }
+
+    public ResponseEntity<UserCreatedPostsByDate> getUserByIdWithAllPosts(long userId) {
+        User user = userRepository.getById(userId);
+
+        UserCreatedPostsByDate userAllPosts = modelMapper.map(user,UserCreatedPostsByDate.class);
+        userAllPosts.setPosts(userAllPosts.getPosts().
+                stream().sorted((p1,p2)->p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
+        return ResponseEntity.ok(userAllPosts);
+    }
+
+
 }

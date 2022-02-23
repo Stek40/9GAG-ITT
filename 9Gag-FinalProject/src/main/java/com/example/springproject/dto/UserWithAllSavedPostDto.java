@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Set;
 @Getter
 @Setter
@@ -12,5 +13,5 @@ public class UserWithAllSavedPostDto {
 
     private long id;
     private String full_name;
-    private Set<PostWithoutOwnerDto> savedPosts;
+    private List<PostWithoutOwnerDto> savedPosts;
 }

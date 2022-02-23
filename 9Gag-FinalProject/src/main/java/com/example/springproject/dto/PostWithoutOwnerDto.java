@@ -19,8 +19,9 @@ public class PostWithoutOwnerDto {
     private String categoryName;
     private int upvotes;
     private int downvotes;
+    private LocalDateTime uploadDate;
     private Set<CommentWithOutPostDto> comments;
 
     //private long userId;
-    private LocalDateTime uploadDate;
+
 }

@@ -16,6 +16,8 @@ public class UserResponseDto {
     private long id;
     private String username;
     private String profile_picture_url;
+    private boolean show_sensitive_content;
+    private boolean hidden;
 
 
 }

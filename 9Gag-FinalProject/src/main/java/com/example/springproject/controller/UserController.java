@@ -38,13 +38,27 @@ public class UserController {
     public ResponseEntity<UserResponseDtoRegister> register(@RequestBody UserRegisterDto u) {
         return userServices.register(u);
     }
-    @GetMapping("users/posts")
+
+    @GetMapping("users/posts/byDate")
     public ResponseEntity<UserCreatedPostsByDate> getUserWithPosts(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         return userServices.getAllCreatedPosts(request);
     }
+    @GetMapping("users/posts/byVote")
+    public ResponseEntity<UserCreatedPostsByDate> getUserWithPostsByVote(HttpServletRequest request) {
+        ValidateData.validatorLogin(request);
+        return userServices.getAllCreatedPostsByVote(request);
+    }
+
+    @GetMapping("users/{userId}/posts/")
+    public ResponseEntity<UserCreatedPostsByDate> getUserByIdWithAllPosts(@RequestParam(name = "userId") long userId) {
+        return userServices.getUserByIdWithAllPosts(userId);
+    }
+
+
+
     @GetMapping("users")
-    public ResponseEntity<UserResponseDtoRegister> getUserById(@RequestParam("id") int id) {
+    public ResponseEntity<UserResponseDto> getUserById(@RequestParam("id") int id) {
         return userServices.getById(id);
     }
 

@@ -323,3 +323,5 @@ ALL CATEGORIES IN 9GAG
 
 TEST
 username - Най-малко шест знака, поне една буква и една цифра:
+
+1- valid change username
