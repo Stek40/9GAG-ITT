@@ -9,7 +9,9 @@ import com.example.springproject.dto.newDtos.user.UserResponseDtoRegister;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.DateTimeParseException;
 import com.example.springproject.exceptions.NotFoundException;
+import com.example.springproject.model.Category;
 import com.example.springproject.model.User;
+import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.CountryRepository;
 import com.example.springproject.repositories.UserRepository;
 import org.apache.commons.io.FilenameUtils;
@@ -41,6 +43,8 @@ public class UserServices {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     public static final String LOGGED = "logged";
     public static final String LOGGED_FROM = "loggedFrom";
@@ -129,10 +133,10 @@ public class UserServices {
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDtoRegister.class));
     }
 
-    public ResponseEntity<UserResponseDtoRegister> getById(long id) {
+    public ResponseEntity<UserResponseDto> getById(long id) {
         Optional<User> opt = userRepository.findById(id);
         if (opt.isPresent()) {
-            return ResponseEntity.ok(modelMapper.map(opt.get(),UserResponseDtoRegister.class));
+            return ResponseEntity.ok(modelMapper.map(opt.get(),UserResponseDto.class));
         }
         throw new NotFoundException("User not found");
     }
@@ -224,6 +228,7 @@ public class UserServices {
 
     public User setIsHidden(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
+
         user.setHidden(true);
         userRepository.save(user);
         return user;
@@ -260,5 +265,54 @@ public class UserServices {
         userAllPosts.setPosts(userAllPosts.getPosts().
                 stream().sorted((p1,p2)->p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
         return ResponseEntity.ok(userAllPosts);
+    }
+    public ResponseEntity<UserCreatedPostsByDate> getAllCreatedPostsByVote(HttpServletRequest request) {
+        User user = userRepository.getById(userRepository.getIdByRequest(request));
+        UserCreatedPostsByDate userAllPosts = modelMapper.map(user,UserCreatedPostsByDate.class);
+        userAllPosts.setPosts(userAllPosts.getPosts().
+                stream().sorted((p1,p2)->p2.getUpvotes()-(p1.getUpvotes())).collect(Collectors.toList()));
+        return ResponseEntity.ok(userAllPosts);
+    }
+
+    public ResponseEntity<UserCreatedPostsByDate> getUserByIdWithAllPosts(long userId) {
+        User user = userRepository.getById(userId);
+
+        UserCreatedPostsByDate userAllPosts = modelMapper.map(user,UserCreatedPostsByDate.class);
+        userAllPosts.setPosts(userAllPosts.getPosts().
+                stream().sorted((p1,p2)->p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
+        return ResponseEntity.ok(userAllPosts);
+    }
+
+
+    public ResponseEntity<UserResponseDto> addCategory(long cId, HttpServletRequest request) {
+        User user = userRepository.getUserByRequest(request);
+        Optional<Category> category = categoryRepository.findById(cId);
+        if (category.isPresent()){
+            if (user.getCategories().contains(category.get())){
+                throw new BadRequestException("Category already exist !");
+            }
+        user.getCategories().add(categoryRepository.getById(cId));
+        userRepository.save(user);
+        category.get().getUsers().add(user);
+        categoryRepository.save(category.get());
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+    }
+        throw new NotFoundException("Category not found !");
+    }
+
+    public ResponseEntity<UserResponseDto> removeCategory(long cId, HttpServletRequest request) {
+        User user = userRepository.getUserByRequest(request);
+        Optional<Category> category = categoryRepository.findById(cId);
+        if (category.isPresent()){
+            if (!user.getCategories().contains(category.get())){
+                throw new BadRequestException("Category is not in the favorites !");
+            }
+            user.getCategories().remove(category.get());
+            userRepository.save(user);
+            category.get().getUsers().remove(user);
+            categoryRepository.save(category.get());
+            return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        }
+        throw new NotFoundException("Category not found !");
     }
 }

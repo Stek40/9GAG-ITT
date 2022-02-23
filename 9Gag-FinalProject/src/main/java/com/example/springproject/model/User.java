@@ -61,4 +61,7 @@ public class User {
     private Set<Comment> upVoteComments;
     @ManyToMany(mappedBy = "downVoters")
     private Set<Comment> downVote;
+
+    @ManyToMany(mappedBy = "users")
+    private Set<Category> categories;
 }
