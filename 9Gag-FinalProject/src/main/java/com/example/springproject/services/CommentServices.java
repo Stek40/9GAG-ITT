@@ -165,7 +165,8 @@ public class CommentServices {
     public Set<DisplayPostDto> getAllCommentPosts(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         Set<DisplayPostDto> allCommentedPosts = new TreeSet<>((p1, p2) -> {
-            return p2.getUploadDate().compareTo(p1.getUploadDate());
+            if(p1.getId() == p2.getId()) return 0;
+            return p2.getUploadDate().compareTo(p1.getUploadDate()) == 0 ? 1 : p2.getUploadDate().compareTo(p1.getUploadDate());
         });
         for (Comment c : user.getComments()) {
             allCommentedPosts.add(postServices.PostToDisplayPostDtoConversion(c.getPost()));
