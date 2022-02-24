@@ -2,7 +2,7 @@ package com.example.springproject.services;
 
 import com.example.springproject.controller.Email;
 import com.example.springproject.dto.UserEditDto;
-import com.example.springproject.dto.UserLoginDto;
+import com.example.springproject.dto.newDtos.user.UserLoginDto;
 import com.example.springproject.dto.UserResponseDto;
 import com.example.springproject.dto.newDtos.user.UserCreatedPostsByDate;
 import com.example.springproject.dto.newDtos.user.UserRegisterDto;
@@ -16,10 +16,8 @@ import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.CountryRepository;
 import com.example.springproject.repositories.UserRepository;
-import jdk.jshell.Snippet;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.coyote.Response;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.File;
@@ -35,7 +34,6 @@ import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,6 +55,7 @@ public class UserServices {
     public static final String LOGGED = "logged";
     public static final String LOGGED_FROM = "loggedFrom";
     public static final String User_Id = "user_id";
+    private static String randomStringUtils = RandomStringUtils.randomAlphabetic(10,16);
 
     String regexUsername = "^(?=.{6,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$";
     String regexPassword = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$";
@@ -137,10 +136,9 @@ public class UserServices {
         user.setFull_name(full_name);
         user.setPassword(passwordEncoder.encode(password));
         user.setUsername(username);
-        String randomStringUtils = RandomStringUtils.randomAlphabetic(10,16);
         user.setToken(randomStringUtils);
         userRepository.save(user);
-        sendEmail.SendEmail(user.getEmail(),randomStringUtils,user.getId());
+        sendEmail.SendEmailVerification(user.getEmail(),randomStringUtils,user.getId());
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDtoRegister.class));
     }
 
@@ -158,7 +156,7 @@ public class UserServices {
         if (user == null) {
             throw new BadRequestException("Incorrect username or password!");
         }
-        if (user.getToken() != null){
+        if (!user.isVerified()){
             throw new BadRequestException("Please confirm your email !");
         }
         if (userDto.getUsername() == null || userDto.getUsername().isBlank()) {
@@ -178,10 +176,11 @@ public class UserServices {
         return ResponseEntity.ok(userResponseDto);
     }
 
-    public User changeProfilePicture(MultipartFile multipartFile, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> changeProfilePicture(MultipartFile multipartFile, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         String ext = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
         String name = String.valueOf(System.nanoTime()) + "." + ext;
+
         try {
             Files.copy(multipartFile.getInputStream(), new File("uploads" + File.separator + name).toPath());
         } catch (IOException e) {
@@ -189,10 +188,10 @@ public class UserServices {
         }
         user.setProfile_picture_url(name);
         userRepository.save(user);
-        return user;
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
     }
 
-    public User changeEmail(UserEditDto editDto, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto>  changeEmail(UserEditDto editDto, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         if (!passwordEncoder.matches(editDto.getPassword(), user.getPassword())) {
             throw new BadRequestException("Invalid password");
@@ -204,10 +203,10 @@ public class UserServices {
         validateEmail(editDto.getNewEmail());
         user.setEmail(editDto.getNewEmail());
         userRepository.save(user);
-        return user;
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
     }
 
-    public User changePassword(UserEditDto dto, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> changePassword(UserEditDto dto, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
@@ -221,11 +220,14 @@ public class UserServices {
         }
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         userRepository.save(user);
-        return user;
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
     }
 
-    public User changeUsername(UserEditDto dto, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> changeUsername(UserEditDto dto, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
+        if (dto.getNew_username()==null|| dto.getNew_username().isBlank()){
+            throw new BadRequestException("Invalid username");
+        }
         if (userRepository.findUserByUsername(dto.getNew_username()) != null) {
             throw new BadRequestException("Username already exist !");
         }
@@ -234,46 +236,51 @@ public class UserServices {
         }
         user.setUsername(dto.getNew_username());
         userRepository.save(user);
-        return user;
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
     }
 
-    public User setSensitiveContentTrue(UserEditDto dto, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> setSensitiveContentTrue(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
-        user.setShow_sensitive_content(true);
+        user.setShow_sensitive_content(!user.isShow_sensitive_content());
         userRepository.save(user);
-        return user;
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
     }
 
-    public User setIsHidden(HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> setIsHidden(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
-
         user.setHidden(true);
         userRepository.save(user);
-        return user;
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
     }
 
-    public User setIsPublic(HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> setIsPublic(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         user.setHidden(false);
         userRepository.save(user);
-        return user;
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
     }
 
-    public User deleteUser(UserEditDto editDto, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> deleteUser(UserEditDto editDto, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         if (!passwordEncoder.matches(editDto.getPassword(), user.getPassword())) {
             throw new BadRequestException("Invalid password !");
         }
         userRepository.delete(user);
-        return user;
+        request.getSession().invalidate();
+        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
     }
 
     private boolean validateEmail(String email) {
+       if (email!= null) {
+           if (!email.matches(regexEmail) || email.isBlank()) {
+               throw new BadRequestException("Invalid email !");
+           }
+           return true;
+       }else {
+           throw new BadRequestException("Email is mandatory !");
 
-        if (!email.matches(regexEmail)) {
-            throw new BadRequestException("Invalid email !");
         }
-        return true;
+
     }
 
 
@@ -310,7 +317,6 @@ public class UserServices {
                 throw new BadRequestException("Category already exist !");
             }
         user.getCategories().add(categoryRepository.getById(cId));
-        userRepository.save(user);
         category.get().getUsers().add(user);
         categoryRepository.save(category.get());
         return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
@@ -334,10 +340,21 @@ public class UserServices {
         throw new NotFoundException("Category not found !");
     }
 
-    public void sendEmailPassword(UserEditDto userEditDto) {
-        String username = userEditDto.getUsername();
+    public ResponseEntity<String> sendEmailPassword(UserEditDto userEditDto) {
+
         String emailUser = userEditDto.getEmail();
-       User user = userRepository.findUserByUsernameOrEmail(username,emailUser);
+        User user = userRepository.findUserByEmail(emailUser);
+        if (user == null){
+            throw new NotFoundException("User not found");
+        }
+        String token = randomStringUtils;
+
+        Thread sender = new Thread(() -> sendEmail.SendEmailChangePassword(emailUser,token,user.getId()));
+        user.setToken(token);
+        userRepository.save(user);
+        sender.start();
+
+       return ResponseEntity.ok("Please check your email !");
 //       if (user != null){
 //           email.SendEmail(user.getEmail() );
 //
@@ -350,6 +367,7 @@ public class UserServices {
         if (user.isPresent()){
             if (user.get().getToken().equals(token)){
                 user.get().setToken(null);
+                user.get().setVerified(true);
                 userRepository.save(user.get());
                 return ResponseEntity.ok("Successfully verified your account please login !");
             }
@@ -359,4 +377,31 @@ public class UserServices {
         }
         throw new NotFoundException("User not found !");
     }
+
+    public ResponseEntity<String> setNewPassword(long id, String token,UserEditDto userEditDto) {
+        Optional<User> user = userRepository.findById(id);
+        if (user.isPresent()){
+            if (userEditDto.getNewPassword() == null){
+                throw new BadRequestException("Password is mandatory !");
+            }
+            if (!user.get().getToken().equals(token)) {
+                throw new UnauthorizedException("Please check your email again !");
+            }
+                if (!userEditDto.getNewPassword().matches(regexPassword)){
+                    throw new BadRequestException("Invalid password, try again !");
+                }
+                if (!userEditDto.getNewPassword().equals(userEditDto.getConfirmNewPassword())){
+                    throw new BadRequestException("Password miss match !");
+                }
+            System.out.println(userEditDto.getPassword());
+                user.get().setPassword(passwordEncoder.encode(userEditDto.getNewPassword()));
+                userRepository.save(user.get());
+            return ResponseEntity.ok("Please login !");
+            }
+        throw new NotFoundException("User not found");
+
+
+        }
+
+
 }

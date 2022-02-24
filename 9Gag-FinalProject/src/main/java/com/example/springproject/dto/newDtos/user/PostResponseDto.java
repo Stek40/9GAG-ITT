@@ -1,4 +1,4 @@
-package com.example.springproject.dto.newDtos;
+package com.example.springproject.dto.newDtos.user;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

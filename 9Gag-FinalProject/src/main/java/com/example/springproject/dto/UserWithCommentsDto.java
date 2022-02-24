@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.Set;
 @Getter
 @Setter
@@ -13,5 +14,5 @@ public class UserWithCommentsDto {
 
 
     private String username;
-    private Set<CommentWithoutOwnerDto> comments;
+    private List<CommentWithoutOwnerDto> comments;
 }

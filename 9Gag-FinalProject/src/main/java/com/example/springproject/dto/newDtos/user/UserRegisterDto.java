@@ -1,6 +1,7 @@
 package com.example.springproject.dto.newDtos.user;
 
 
+import com.sun.istack.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
