@@ -44,6 +44,8 @@ public class CommentServices {
     private CommentRepository commentRepository;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private PostServices postServices;
 
     public ResponseEntity<CommentResponseDto> createComment(MultipartFile file, String text, long postId, HttpServletRequest request) {
         if (text == null && file == null) {
@@ -148,15 +150,33 @@ public class CommentServices {
         throw new UnauthorizedException("Тhe user didn't vote !");
     }
 
-    public Set<PostWithoutCommentPostDto> getAllCommentPosts(HttpServletRequest request) {
+
+
+    public Set<DisplayPostDto> getAllCommentPosts(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
-        Set<PostWithoutCommentPostDto> allCommentedPosts = new TreeSet<>();
+        Set<DisplayPostDto> allCommentedPosts = new TreeSet<>((p1, p2) -> {
+            if(p1.getId() == p2.getId()) return 0;
+            return p2.getUploadDate().compareTo(p1.getUploadDate()) == 0 ? 1 : p2.getUploadDate().compareTo(p1.getUploadDate());
+        });
         for (Comment c : user.getComments()) {
-            PostWithoutCommentPostDto postWithoutCommentPostDto = modelMapper.map(c.getPost(), PostWithoutCommentPostDto.class);
-            allCommentedPosts.add(postWithoutCommentPostDto);
+            allCommentedPosts.add(postServices.PostToDisplayPostDtoConversion(c.getPost()));
         }
         return allCommentedPosts;
     }
+
+//    public Set<PostWithoutCommentPostDto> getAllCommentPosts(HttpServletRequest request) {
+//        User user = userRepository.getUserByRequest(request);
+//        Set<DisplayPostDto> allCommentedPosts = new TreeSet<>((p1, p2) -> {
+//            if(p1.getId() == p2.getId()) return 0;
+//            return p2.getUploadDate().compareTo(p1.getUploadDate()) == 0 ? 1 : p2.getUploadDate().compareTo(p1.getUploadDate());
+//        });
+//        for (Comment c : user.getComments()) {
+//            allCommentedPosts.add(postServices.PostToDisplayPostDtoConversion(c.getPost()));
+//        }
+//        return allCommentedPosts;
+//    }
+
+
 //    public Set<DisplayPostDto> getAllCommentPosts(HttpServletRequest request) {
 //        User user = userRepository.getUserByRequest(request);
 //        Set<DisplayPostDto> allCommentedPosts = new TreeSet<>((p1, p2) -> {
@@ -214,3 +234,4 @@ public class CommentServices {
         return ResponseEntity.ok(userWithCommentsDto);
     }
 }
+

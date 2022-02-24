@@ -2,6 +2,7 @@ package com.example.springproject.controller;
 import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
 import com.example.springproject.dto.newDtos.comment.AllCommentsOnPostDto;
+import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.model.Comment;
 import com.example.springproject.services.CommentServices;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,7 @@ public class CommentController {
     }
 
     @GetMapping("comment/getAllPosts")
-    public ResponseEntity<Set<PostWithoutCommentPostDto>> getAllCommentPosts(HttpServletRequest request) {
+    public ResponseEntity<Set<DisplayPostDto>> getAllCommentPosts(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         return ResponseEntity.ok(commentServices.getAllCommentPosts(request));
     }
