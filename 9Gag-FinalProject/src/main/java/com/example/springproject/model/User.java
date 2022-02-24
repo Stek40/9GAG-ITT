@@ -46,6 +46,8 @@ public class User {
     private String profile_picture_url;
     @Column
     private String token;
+    @Column
+    private boolean isVerified;
     @OneToMany(mappedBy = "owner")
     private Set<Post> posts;
     @OneToMany(mappedBy = "commentOwner")
@@ -66,4 +68,6 @@ public class User {
 
     @ManyToMany(mappedBy = "users")
     private Set<Category> categories;
+
+
 }

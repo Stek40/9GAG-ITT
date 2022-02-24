@@ -1,89 +1,74 @@
 package com.example.springproject.controller;
-
 import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
 import com.example.springproject.dto.newDtos.comment.AllCommentsOnPostDto;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.model.Comment;
-import com.example.springproject.model.User;
-import com.example.springproject.repositories.CommentRepository;
-import com.example.springproject.repositories.UserRepository;
 import com.example.springproject.services.CommentServices;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 @RestController
 public class CommentController {
-    @Autowired
-    CommentRepository repository;
+
     @Autowired
     CommentServices commentServices;
-    @Autowired
-    private ModelMapper modelMapper;
-    @Autowired
-    private UserRepository userRepository;
+
 
     @PutMapping("comment/add")
     public ResponseEntity<CommentResponseDto> addComment(@RequestParam(name = "file") MultipartFile file,
-                                                         @RequestParam(name = "text") String text, @RequestParam(name = "postId") long postId,
+                                                         @RequestParam(name = "text") String text,
+                                                         @RequestParam(name = "postId") long postId,
                                                          HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        long userId = userRepository.getIdByRequest(request);
-        Comment comment = commentServices.createComment(file, text, postId, userId);
-
-        CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
-        commentResponseDto.setUserId(userId);
-        return ResponseEntity.ok(commentResponseDto);
+        return commentServices.createComment(file, text, postId, request);
 
     }
 
     @PutMapping("/comment/upvote")
-    public ResponseEntity<CommentResponseDto> upvote(@RequestParam(name = "commentId") long commentId, HttpServletRequest request) {
+    public ResponseEntity<CommentResponseDto> upvote(@RequestParam(name = "commentId") long commentId,
+                                                     HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        Comment comment = commentServices.upVoteComment(commentId, request);
-        return ResponseEntity.ok(modelMapper.map(comment, CommentResponseDto.class));
+        return commentServices.upVoteComment(commentId, request);
     }
 
     @PutMapping("/comment/downvote")
-    public ResponseEntity<CommentResponseDto> downVote(@RequestParam(name = "commentId") long commentId, HttpServletRequest request) {
+    public ResponseEntity<CommentResponseDto> downVote(@RequestParam(name = "commentId") long commentId,
+                                                       HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        Comment comment = commentServices.dowVoteComment(commentId, request);
-        return ResponseEntity.ok(modelMapper.map(comment, CommentResponseDto.class));
+        return commentServices.dowVoteComment(commentId, request);
     }
 
     @PutMapping("/comment/removeVote")
-    public ResponseEntity<CommentWithoutOwnerDto> removeVot(@RequestParam(name = "commentId") long commentId, HttpServletRequest request) {
+    public ResponseEntity<CommentWithoutOwnerDto> removeVot(@RequestParam(name = "commentId") long commentId,
+                                                            HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        Comment comment = commentServices.removeVot(commentId, request);
-        return ResponseEntity.ok(modelMapper.map(comment, CommentWithoutOwnerDto.class));
+        return commentServices.removeVot(commentId, request);
     }
 
     @GetMapping("/comment/getAll")
     public ResponseEntity<UserWithCommentsDto> getAllCommentsByUpVote(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User user = userRepository.getUserByRequest(request);
-
-        return ResponseEntity.ok(modelMapper.map(user, UserWithCommentsDto.class));
+        return commentServices.getAllCommentsUser(request);
     }
 
-//    @GetMapping("comment/getAllPosts")
-//    public ResponseEntity<Set<PostWithoutCommentPostDto>> getAllCommentPosts(HttpServletRequest request) {
+    @GetMapping("comment/getAllPosts")
+    public ResponseEntity<Set<DisplayPostDto>> getAllCommentPosts(HttpServletRequest request) {
+        ValidateData.validatorLogin(request);
+        return ResponseEntity.ok(commentServices.getAllCommentPosts(request));
+    }
+
+    //    @GetMapping("comment/getAllPosts")
+//        public ResponseEntity<Set<DisplayPostDto>> getAllCommentPosts(HttpServletRequest request) {
 //        ValidateData.validatorLogin(request);
+//
 //        return ResponseEntity.ok(commentServices.getAllCommentPosts(request));
 //    }
-    @GetMapping("comment/getAllPosts")
-        public ResponseEntity<Set<DisplayPostDto>> getAllCommentPosts(HttpServletRequest request) {
-        ValidateData.validatorLogin(request);
-        Set<DisplayPostDto> commentedPosts = commentServices.getAllCommentPosts(request);
-        return ResponseEntity.ok(commentedPosts);
-    }
     @GetMapping("/allCommentByVote/post")
     public AllCommentsOnPostDto getAllCommentsByUpVote(@RequestParam(name = "id") long postId) {
         return commentServices.getAllCommentByPostId(postId);
@@ -92,5 +77,11 @@ public class CommentController {
     @GetMapping("/allCommentByDate/post")
     public AllCommentsOnPostDto getAllCommentsByDate(@RequestParam(name = "id") long postId) {
         return commentServices.getAllCommentByPostDate(postId);
+    }
+
+    @PutMapping("/comment/remove")
+    public ResponseEntity<CommentResponseDto> removeComment(@RequestParam(name = "commentId") long postId, HttpServletRequest request) {
+        ValidateData.validatorLogin(request);
+        return commentServices.removeComment(postId, request);
     }
 }

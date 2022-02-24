@@ -2,17 +2,15 @@ package com.example.springproject.controller;
 
 import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
+import com.example.springproject.dto.newDtos.user.UserLoginDto;
 import com.example.springproject.dto.newDtos.user.UserCreatedPostsByDate;
 import com.example.springproject.dto.newDtos.user.UserRegisterDto;
 import com.example.springproject.dto.newDtos.user.UserResponseDtoRegister;
-import com.example.springproject.exceptions.BadRequestException;
+import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
-import com.example.springproject.model.Category;
 import com.example.springproject.model.User;
-import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.UserRepository;
 import com.example.springproject.services.UserServices;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,27 +26,30 @@ public class UserController {
     public static final String LOGGED_FROM = "loggedFrom";
     public static final String User_Id = "user_id";
     @Autowired
-    private UserRepository userRepository;
-    @Autowired
     UserServices userServices;
     @Autowired
-    private ModelMapper modelMapper;
-    @Autowired
-    private ValidateData data;
-    @Autowired
-    CategoryRepository categoryRepository;
+    UserRepository userRepository;
 
 
- @GetMapping("/users/verified")
-   public ResponseEntity<String> verifiedProfile(@RequestParam (name = "id") long id, @RequestParam (name = "?token") String token){
+    @GetMapping("/users/verified")
+    public ResponseEntity<String> verifiedProfile(@RequestParam(name = "id") long id, @RequestParam(name = "?token") String token) {
 
-     return userServices.verifyUser(id,token);
- }
+        return userServices.verifyUser(id, token);
+    }
+
+    @PostMapping("/users/newPassword")
+    public ResponseEntity<String> setNewPassword(@RequestParam(name = "id") long id, @RequestParam(name = "?token") String token,
+                                                 @RequestBody UserEditDto userEditDto) {
+        System.out.println(id);
+        System.out.println(token);
+        System.out.println(userEditDto.getNewPassword());
+        return userServices.setNewPassword(id, token, userEditDto);
+    }
 
     @PostMapping("/users/forgottenPassword")
-    public ResponseEntity<UserResponseDto> sendEmail(@RequestBody UserEditDto userEditDto) {
-       userServices.sendEmailPassword(userEditDto);
-      return null;
+    public ResponseEntity<String> sendEmail(@RequestBody UserEditDto userEditDto) {
+
+        return userServices.sendEmailPassword(userEditDto);
     }
 
     @PostMapping("/users/addFavouriteCategories")
@@ -101,71 +102,66 @@ public class UserController {
         session.invalidate();
     }
 
+
+
     public void validateLogin(HttpServletRequest request) {
         HttpSession session = request.getSession();
         if (session.isNew() || session.getAttribute(User_Id) == null ||
                 (!(Boolean) session.getAttribute(LOGGED)) ||
                 (!request.getRemoteAddr().equals(session.getAttribute(LOGGED_FROM)))) {
             throw new UnauthorizedException("You have to login!");
+
         }
     }
 
     @PutMapping("/users/edit/profilePicture")
     public ResponseEntity<UserResponseDto> changeProfilePicture(@RequestParam(name = "file") MultipartFile file, HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User user = userServices.changeProfilePicture(file, request);
-        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
+        return userServices.changeProfilePicture(file, request);
     }
 
     @PutMapping("/users/edit/changeEmail")
     public ResponseEntity<UserResponseDto> changeEmail(@RequestBody UserEditDto editDto, HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User u = userServices.changeEmail(editDto, request);
-        return ResponseEntity.ok(modelMapper.map(u, UserResponseDto.class));
+        return userServices.changeEmail(editDto, request);
     }
 
     @PutMapping("/users/changePassword")
     public ResponseEntity<UserResponseDto> changePassword(@RequestBody UserEditDto editDto, HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User user = userServices.changePassword(editDto, request);
-        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
+        return userServices.changePassword(editDto, request);
     }
 
     @PutMapping("/users/changeUsername")
     public ResponseEntity<UserResponseDto> changeUsername(@RequestBody UserEditDto userEditDto, HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User user = userServices.changeUsername(userEditDto, request);
 
-        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
+        return userServices.changeUsername(userEditDto, request);
     }
 
     @PutMapping("/users/sensitiveContent")
-    public ResponseEntity<UserResponseDto> setSensitiveContent(@RequestBody UserEditDto userEditDto, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> setSensitiveContent(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User user = userServices.setSensitiveContentTrue(userEditDto, request);
-        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
+
+        return userServices.setSensitiveContentTrue(request);
     }
 
     @PutMapping("/users/isHidden")
     public ResponseEntity<UserResponseDto> setIsHidden(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User user = userServices.setIsHidden(request);
-        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
+        return userServices.setIsHidden(request);
     }
 
     @PutMapping("/users/isPublic")
     public ResponseEntity<UserResponseDto> setIsPublic(HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User user = userServices.setIsPublic(request);
-        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
+        return userServices.setIsPublic(request);
     }
 
     @PostMapping("/users/delete")
     public ResponseEntity<UserResponseDto> deleteUser(@RequestBody UserEditDto editDto, HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        User user = userServices.deleteUser(editDto, request);
-        request.getSession().invalidate();
-        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
+        return userServices.deleteUser(editDto, request);
     }
 
 }
