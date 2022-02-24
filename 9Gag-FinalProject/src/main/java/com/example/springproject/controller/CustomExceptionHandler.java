@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @ControllerAdvice
@@ -62,7 +63,15 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         dto.setStatus(HttpStatus.BAD_REQUEST.value());
         return dto;
     }
-
+    @ExceptionHandler(value = HttpClientErrorException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseBody
+    public ErrorDto handlerForbiddenException (Exception e){
+        ErrorDto dto = new ErrorDto();
+        dto.setMsg(e.getMessage());
+        dto.setStatus(HttpStatus.FORBIDDEN.value());
+        return dto;
+    }
 
 
 }

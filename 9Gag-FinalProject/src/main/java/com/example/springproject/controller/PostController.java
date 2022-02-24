@@ -3,6 +3,7 @@ package com.example.springproject.controller;
 import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
+import com.example.springproject.dto.newDtos.postDtos.PostVoteResultsDto;
 import com.example.springproject.exceptions.UnauthorizedException;
 import com.example.springproject.model.Post;
 import com.example.springproject.model.User;
@@ -85,21 +86,21 @@ public class PostController {
     }
 
     @PutMapping("/posts/{id}/upvote")
-    public ResponseEntity<DisplayPostDto> upvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
+    public ResponseEntity<PostVoteResultsDto> upvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
         long userId = (Long)session.getAttribute(UserController.User_Id);
         Post p = postServices.votePost(true, id, userId);
         postRepository.save(p);
-        DisplayPostDto pDto = postServices.PostToDisplayPostDtoConversion(p);
+        PostVoteResultsDto pDto = postServices.PostToVoteResultsPostsDtoConversion(p);
         return ResponseEntity.ok().body(pDto);
     }
     @PutMapping("/posts/{id}/downvote")
-    public ResponseEntity<DisplayPostDto> downvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
+    public ResponseEntity<PostVoteResultsDto> downvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
         long userId = (Long)session.getAttribute(UserController.User_Id);
         Post p = postServices.votePost(false, id, userId);
         postRepository.save(p);
-        DisplayPostDto pDto = postServices.PostToDisplayPostDtoConversion(p);
+        PostVoteResultsDto pDto = postServices.PostToVoteResultsPostsDtoConversion(p);
         return ResponseEntity.ok().body(pDto);
     }
     @GetMapping("/posts")
@@ -124,9 +125,8 @@ public class PostController {
     @GetMapping("/users/upvoted")
     public ResponseEntity<List<DisplayPostDto>> getUpvotedPosts(HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
-        long userId = (Long)session.getAttribute(UserController.User_Id);//todo method with Marto
+        long userId = (Long)session.getAttribute(UserController.User_Id);
         Set<Post> posts = userRepository.getById(userId).getUpvotedPosts();
-
         List<DisplayPostDto> pDtos = postServices.PostToDisplayPostDtoConversionCollection(postServices.sortPostsByDate(new ArrayList<>(posts)));
         return ResponseEntity.ok().body(pDtos);
     }
@@ -148,11 +148,11 @@ public class PostController {
                 .stream().sorted((p1, p2) -> p2.getUpvotes() - (p1.getUpvotes())).collect(Collectors.toList()));
         return ResponseEntity.ok(userWithAllSavedPostDto);
     }
-    @GetMapping("/users/comments")
-    public ResponseEntity<List<Post>> getCommentedPosts(@RequestParam("id") long id, HttpServletRequest request) {
-        userController.validateLogin(request);
-        return null;
-    }
+//    @GetMapping("/users/comments")
+//    public ResponseEntity<List<Post>> getCommentedPosts(@RequestParam("id") long id, HttpServletRequest request) {
+//        userController.validateLogin(request);
+//        return null;
+//    }
     @DeleteMapping("/posts/{id}/delete")
     public void deletePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
@@ -166,12 +166,12 @@ public class PostController {
     }
     @GetMapping("/posts/search/{search}")
     public ResponseEntity<List<DisplayPostDto>> searchPosts(@PathVariable String search) {
-        //serialize "search string" into keywords
-        //search in the descriptions of the posts for each word
-        //return posts sorted by most common keywords found first
-
+        /*
+        serialize "search string" into keywords
+        search in the descriptions of the posts for each word
+        return posts sorted by most common keywords found first
+        */
         List<DisplayPostDto> result = postServices.searchPostGenerator(search);
-
-       return ResponseEntity.ok().body(result);
+        return ResponseEntity.ok().body(result);
     }
 }

@@ -19,15 +19,15 @@ public interface PostRepository  extends JpaRepository<Post, Long> {
             nativeQuery = true)
     List<Post> getAllOrderByUploadDate();
     @Query(
-            value = "SELECT * FROM 9gag.posts order by (upvotes - downvotes) desc",
+            value = "SELECT * FROM 9gag.posts order by (2*upvotes - downvotes) desc",
             nativeQuery = true)
     List<Post> getAllOrderByUpvotes();
     @Query(
-            value = "SELECT description FROM posts u ",
+            value = "SELECT description FROM posts",
             nativeQuery = true)
     List<String> findAllPostDescriptions();
     @Query(
-            value = "SELECT id FROM posts u ",
+            value = "SELECT id FROM posts",
             nativeQuery = true)
     List<Integer> findAllPostIds();
 }

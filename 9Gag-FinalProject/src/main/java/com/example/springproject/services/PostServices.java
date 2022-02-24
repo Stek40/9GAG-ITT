@@ -6,7 +6,9 @@ import com.example.springproject.dto.CategoryWithoutPostsDto;
 //import com.example.springproject.dto.PostWithoutOwnerDto;
 import com.example.springproject.dto.UserWithoutPostsDto;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
+import com.example.springproject.dto.newDtos.postDtos.PostVoteResultsDto;
 import com.example.springproject.exceptions.BadRequestException;
+import com.example.springproject.exceptions.ForbiddenException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
 import com.example.springproject.model.Post;
@@ -153,7 +155,16 @@ public class PostServices {
         });
         return allPosts;
     }
+    public List<Post> sortPostsByUpvotes(List<Post> allPosts) {
+        allPosts.sort((p1, p2) -> {
+            return (p2.getUpvotes() - p2.getDownvotes()) - (p1.getUpvotes() - p1.getDownvotes());
+        });
+        return allPosts;
+    }
 
+    public PostVoteResultsDto PostToVoteResultsPostsDtoConversion(Post p) {
+        return modelMapper.map(p, PostVoteResultsDto.class);
+    }
     public DisplayPostDto PostToDisplayPostDtoConversion(Post p) {
         DisplayPostDto pDto = modelMapper.map(p, DisplayPostDto.class);
         pDto.setUserId(p.getOwner().getId());
@@ -167,6 +178,7 @@ public class PostServices {
         }
         return pDtos;
     }
+
     public List<DisplayPostDto> searchPostGenerator(String search) {
         ArrayList<String> words = this.extractWords(search);
 
@@ -188,7 +200,7 @@ public class PostServices {
         for (Map.Entry<Long, Integer> e : numberOfFoundWords.entrySet()) { //test print
             System.out.println(e.getKey() + " " + e.getValue());
         }
-        System.out.println("@@@@@@@@@@@@");
+        System.out.println("@@@@@@@@@@@@"); //test print
         SortedSet<Map.Entry<Long, Integer>> sortedIds = this.sortIdsByFoundWords(numberOfFoundWords);
         List<DisplayPostDto> result = this.foundPostsFromSearch(sortedIds);
        return result;
@@ -247,10 +259,17 @@ public class PostServices {
 
     public String saveMedia(MultipartFile file) throws IOException {
         if(file.isEmpty()) {
-            throw new NotFoundException("Media is missing.");
+            throw new UnauthorizedException("File is empty.");
+        }
+        System.out.println(file.getSize());
+        if(file.getSize() > 1024 * 1024 * 100) {// 100 mb
+            throw new UnauthorizedException("File is too large. Limit is 100 mb");
         }
         String name = String.valueOf(System.nanoTime());
         String ext = FilenameUtils.getExtension(file.getOriginalFilename());
+        if(ext == null || !ext.matches("jpg|png|gif|bmp") && !ext.matches("mov|mp4|webm|mkv")) {
+            throw new ForbiddenException("This format of the media is not allowed.");
+        }
         String nameAndExt = name + "." + ext;
         File destination = new File("media" + File.separator + "postMedia" + File.separator + nameAndExt);
         Files.copy(file.getInputStream(), Path.of(destination.toURI()));

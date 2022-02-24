@@ -34,9 +34,9 @@ public class CategoryController {
         categoryRepository.saveAll(categories);
     }
     @GetMapping("/category/{id}")
-    public ResponseEntity<List<DisplayPostDto>> getById(@PathVariable long id){
-        Category c = categoryServices.getCategory(id);
-        List<DisplayPostDto> pDtos = postServices.PostToDisplayPostDtoConversionCollection(postServices.sortPostsByDate(postServices.postsSetToList(c.getPosts())));
+    public ResponseEntity<List<DisplayPostDto>> getAllPostsByCategory(@PathVariable long id, @RequestParam("sort_by_upvotes") boolean isByUpvotes){
+        //no login
+        List<DisplayPostDto> pDtos = categoryServices.allPostsByCategory(id, isByUpvotes);
         return ResponseEntity.ok().body(pDtos);
     }
 }

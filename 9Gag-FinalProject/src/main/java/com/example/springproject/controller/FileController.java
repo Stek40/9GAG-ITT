@@ -6,6 +6,7 @@ import com.example.springproject.model.Comment;
 import com.example.springproject.repositories.CommentRepository;
 import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
+import com.example.springproject.services.FileServices;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -33,12 +34,13 @@ public class FileController {
     PostRepository postRepository;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    FileServices fileServices;
 
-    @GetMapping("/files/profilePicture")
+    @GetMapping("/files/profilePicture/download")
     public void download(HttpServletResponse response,HttpServletRequest request){
-        userController.validateLogin(request);
+        //userController.validateLogin(request);
         String filename = userRepository.getById((Long) request.getSession().getAttribute(UserController.User_Id)).getProfile_picture_url();
-
         File file = new File("uploads"+ File.separator + filename);
         try {
             Files.copy(file.toPath(),response.getOutputStream());
@@ -46,35 +48,30 @@ public class FileController {
             throw new NotFoundException("Profile picture not found !");
         }
     }
-    @SneakyThrows
-    @GetMapping("/files/{postId}/download")
-    public void downloadPostMedia(@PathVariable long postId, HttpServletResponse response, HttpServletRequest request){
-        userController.validateLogin(request);
-        String fileName = postRepository.getMediaUrlOfPostWithId(postId);
-        File f = new File("media" + File.separator + "postMedia" + File.separator + fileName);
-        Files.copy(f.toPath(),response.getOutputStream());
+    @GetMapping("/files/post/download")
+    public void downloadPostMedia(@RequestParam (name = "postId") long postId, HttpServletResponse response, HttpServletRequest request){
+        File f = fileServices.getFileFromPost(postId);
+        try {
+            Files.copy(f.toPath(),response.getOutputStream());
+        } catch (IOException e) {
+            throw new NotFoundException("Post media not found.");
+        }
     }
-    @GetMapping("/files/comment")
+    @GetMapping("/files/comment/download")
     public ResponseEntity<CommentWithMediaDto> getComment(@RequestParam (name = "commentId") long cId, HttpServletResponse response){
         Optional<Comment> comment = repository.findById(cId);
         if (comment.isPresent()) {
-        File file = new File("commentImages"+ File.separator + comment.get().getMediaUrl());
-        try {
-            Files.copy(file.toPath(),response.getOutputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String s = "Sadsa";
-
-             CommentWithMediaDto commentWithMediaDto = new CommentWithMediaDto();
-             commentWithMediaDto.setText(comment.get().getText());
-             return ResponseEntity.ok(commentWithMediaDto);
-
+            File file = new File("commentImages"+ File.separator + comment.get().getMediaUrl());
+            try {
+                Files.copy(file.toPath(),response.getOutputStream());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            //String s = "Sadsa";
+            CommentWithMediaDto commentWithMediaDto = new CommentWithMediaDto();
+            commentWithMediaDto.setText(comment.get().getText());
+            return ResponseEntity.ok(commentWithMediaDto);
          }
          throw new NotFoundException("Comment not found !");
-
-
-
     }
-
 }
