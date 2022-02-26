@@ -16,6 +16,7 @@ public class Email {
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
         simpleMailMessage.setFrom("martin9gag@gmail.com");
         simpleMailMessage.setText(url);
+        simpleMailMessage.setSubject("9Gag verify email !");
         simpleMailMessage.setTo(email);
         javaMailSender.send(simpleMailMessage);
     }
@@ -24,6 +25,7 @@ public class Email {
                 " http://localhost:9999/users/newPassword?id="+userId+"&?token="+token;
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
         simpleMailMessage.setFrom("9Gag");
+        simpleMailMessage.setSubject("9gag change password !");
         simpleMailMessage.setText(url);
         simpleMailMessage.setTo(email);
         javaMailSender.send(simpleMailMessage);

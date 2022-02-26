@@ -27,12 +27,12 @@ public class UserController {
     public static final String User_Id = "user_id";
     @Autowired
     UserServices userServices;
-    @Autowired
-    UserRepository userRepository;
+
 
 
     @GetMapping("/users/verified")
-    public ResponseEntity<String> verifiedProfile(@RequestParam(name = "id") long id, @RequestParam(name = "?token") String token) {
+    public ResponseEntity<String> verifiedProfile(@RequestParam(name = "id") long id,
+                                                  @RequestParam(name = "?token") String token) {
 
         return userServices.verifyUser(id, token);
     }
@@ -40,9 +40,8 @@ public class UserController {
     @PostMapping("/users/newPassword")
     public ResponseEntity<String> setNewPassword(@RequestParam(name = "id") long id, @RequestParam(name = "?token") String token,
                                                  @RequestBody UserEditDto userEditDto) {
-        System.out.println(id);
-        System.out.println(token);
-        System.out.println(userEditDto.getNewPassword());
+
+
         return userServices.setNewPassword(id, token, userEditDto);
     }
 
@@ -53,13 +52,15 @@ public class UserController {
     }
 
     @PostMapping("/users/addFavouriteCategories")
-    public ResponseEntity<UserResponseDto> addFavouriteCategories(@RequestParam(name = "categoryId") long cId, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> addFavouriteCategories(@RequestParam(name = "categoryId") long cId,
+                                                                  HttpServletRequest request) {
         validateLogin(request);
         return userServices.addCategory(cId, request);
     }
 
     @PostMapping("/users/removeFavouriteCategories")
-    public ResponseEntity<UserResponseDto> removeFavouriteCategories(@RequestParam(name = "categoryId") long cId, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> removeFavouriteCategories(@RequestParam(name = "categoryId")
+                                                                                 long cId, HttpServletRequest request) {
         validateLogin(request);
         return userServices.removeCategory(cId, request);
     }
@@ -115,13 +116,15 @@ public class UserController {
     }
 
     @PutMapping("/users/edit/profilePicture")
-    public ResponseEntity<UserResponseDto> changeProfilePicture(@RequestParam(name = "file") MultipartFile file, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> changeProfilePicture(@RequestParam(name = "file") MultipartFile file,
+                                                                HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         return userServices.changeProfilePicture(file, request);
     }
 
     @PutMapping("/users/edit/changeEmail")
-    public ResponseEntity<UserResponseDto> changeEmail(@RequestBody UserEditDto editDto, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> changeEmail(@RequestBody UserEditDto editDto,
+                                                       HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         return userServices.changeEmail(editDto, request);
     }
@@ -158,8 +161,8 @@ public class UserController {
         return userServices.setIsPublic(request);
     }
 
-    @PostMapping("/users/delete")
-    public ResponseEntity<UserResponseDto> deleteUser(@RequestBody UserEditDto editDto, HttpServletRequest request) {
+    @DeleteMapping("/users/delete")
+    public ResponseEntity<String> deleteUser(@RequestBody UserEditDto editDto, HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         return userServices.deleteUser(editDto, request);
     }

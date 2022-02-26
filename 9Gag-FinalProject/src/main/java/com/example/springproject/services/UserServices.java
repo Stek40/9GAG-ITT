@@ -51,15 +51,17 @@ public class UserServices {
     private CategoryRepository categoryRepository;
     @Autowired
     private Email sendEmail;
+    @Autowired
+    private FileServices fileServices;
 
     public static final String LOGGED = "logged";
     public static final String LOGGED_FROM = "loggedFrom";
     public static final String User_Id = "user_id";
-    private static String randomStringUtils = RandomStringUtils.randomAlphabetic(10,16);
+    private static String randomStringUtils = RandomStringUtils.randomAlphabetic(10, 16);
 
-    String regexUsername = "^(?=.{6,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$";
-    String regexPassword = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$";
-    String regexEmail = "^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
+    private String regexUsername = "^(?=.{6,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$";
+    private String regexPassword = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$";
+    private String regexEmail = "^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
 
     public ResponseEntity<UserResponseDtoRegister> register(UserRegisterDto u) {
         String username = u.getUsername();
@@ -138,25 +140,23 @@ public class UserServices {
         user.setUsername(username);
         user.setToken(randomStringUtils);
         userRepository.save(user);
-        sendEmail.SendEmailVerification(user.getEmail(),randomStringUtils,user.getId());
+        new Thread(() -> sendEmail.SendEmailVerification(user.getEmail(), randomStringUtils, user.getId())).start();
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDtoRegister.class));
     }
 
     public ResponseEntity<UserResponseDto> getById(long id) {
-        Optional<User> opt = userRepository.findById(id);
-        if (opt.isPresent()) {
-            return ResponseEntity.ok(modelMapper.map(opt.get(),UserResponseDto.class));
-        }
-        throw new NotFoundException("User not found");
+        User opt = userRepository.findById(id).orElseThrow(() -> new NotFoundException("User not found"));
+        return ResponseEntity.ok(modelMapper.map(opt, UserResponseDto.class));
+
     }
 
-    public ResponseEntity<UserResponseDto> logIn(UserLoginDto userDto,HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> logIn(UserLoginDto userDto, HttpServletRequest request) {
         User user = userRepository.findUserByUsername(userDto.getUsername());
 
         if (user == null) {
             throw new BadRequestException("Incorrect username or password!");
         }
-        if (!user.isVerified()){
+        if (!user.isVerified()) {
             throw new BadRequestException("Please confirm your email !");
         }
         if (userDto.getUsername() == null || userDto.getUsername().isBlank()) {
@@ -177,21 +177,29 @@ public class UserServices {
     }
 
     public ResponseEntity<UserResponseDto> changeProfilePicture(MultipartFile multipartFile, HttpServletRequest request) {
+        if (multipartFile == null){
+            throw new BadRequestException("Please select image from files !");
+        }
         User user = userRepository.getUserByRequest(request);
         String ext = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
         String name = String.valueOf(System.nanoTime()) + "." + ext;
 
         try {
-            Files.copy(multipartFile.getInputStream(), new File("uploads" + File.separator + name).toPath());
+            fileServices.validateMediaType(multipartFile,true);
+            if (user.getProfile_picture_url() != null){
+                File fileToDel = new File("media" + File.separator + "profilePictures" + File.separator + user.getProfile_picture_url());
+                fileToDel.delete();
+            }
+            Files.copy(multipartFile.getInputStream(), new File("media"+File.separator+"profilePictures" + File.separator + name).toPath());
         } catch (IOException e) {
             e.printStackTrace();
         }
         user.setProfile_picture_url(name);
         userRepository.save(user);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
-    public ResponseEntity<UserResponseDto>  changeEmail(UserEditDto editDto, HttpServletRequest request) {
+    public ResponseEntity<UserResponseDto> changeEmail(UserEditDto editDto, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         if (!passwordEncoder.matches(editDto.getPassword(), user.getPassword())) {
             throw new BadRequestException("Invalid password");
@@ -203,7 +211,7 @@ public class UserServices {
         validateEmail(editDto.getNewEmail());
         user.setEmail(editDto.getNewEmail());
         userRepository.save(user);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
     public ResponseEntity<UserResponseDto> changePassword(UserEditDto dto, HttpServletRequest request) {
@@ -220,91 +228,98 @@ public class UserServices {
         }
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         userRepository.save(user);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
     public ResponseEntity<UserResponseDto> changeUsername(UserEditDto dto, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
-        if (dto.getNew_username()==null|| dto.getNew_username().isBlank()){
+        if (dto.getNew_username() == null || dto.getNew_username().isBlank()) {
             throw new BadRequestException("Invalid username");
         }
         if (userRepository.findUserByUsername(dto.getNew_username()) != null) {
             throw new BadRequestException("Username already exist !");
         }
-        if (!dto.getNew_username().matches(regexUsername)){
+        if (!dto.getNew_username().matches(regexUsername)) {
             throw new BadRequestException("Invalid username !");
         }
         user.setUsername(dto.getNew_username());
         userRepository.save(user);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
     public ResponseEntity<UserResponseDto> setSensitiveContentTrue(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         user.setShow_sensitive_content(!user.isShow_sensitive_content());
         userRepository.save(user);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
     public ResponseEntity<UserResponseDto> setIsHidden(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         user.setHidden(true);
         userRepository.save(user);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
     public ResponseEntity<UserResponseDto> setIsPublic(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         user.setHidden(false);
         userRepository.save(user);
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
-    public ResponseEntity<UserResponseDto> deleteUser(UserEditDto editDto, HttpServletRequest request) {
+    public ResponseEntity<String> deleteUser(UserEditDto editDto, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
+        if (editDto.getPassword() == null){
+            throw new BadRequestException("Password is mandatory !");
+        }
         if (!passwordEncoder.matches(editDto.getPassword(), user.getPassword())) {
             throw new BadRequestException("Invalid password !");
         }
+        if (user.getProfile_picture_url()!=null && !user.getProfile_picture_url().isBlank()){
+            File fileToDel = new File("media" + File.separator + "profilePictures" + File.separator + user.getProfile_picture_url());
+            fileToDel.delete();
+        }
         userRepository.delete(user);
         request.getSession().invalidate();
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+        return ResponseEntity.ok("Acount is deleted !");
     }
 
     private boolean validateEmail(String email) {
-       if (email!= null) {
-           if (!email.matches(regexEmail) || email.isBlank()) {
-               throw new BadRequestException("Invalid email !");
-           }
-           return true;
-       }else {
-           throw new BadRequestException("Email is mandatory !");
+        if (email != null) {
+            if (!email.matches(regexEmail) || email.isBlank()) {
+                throw new BadRequestException("Invalid email !");
+            }
+            return true;
+        } else {
+            throw new BadRequestException("Email is mandatory !");
 
         }
-
     }
 
 
     public ResponseEntity<UserCreatedPostsByDate> getAllCreatedPosts(HttpServletRequest request) {
         User user = userRepository.getById(userRepository.getIdByRequest(request));
-        UserCreatedPostsByDate userAllPosts = modelMapper.map(user,UserCreatedPostsByDate.class);
+        UserCreatedPostsByDate userAllPosts = modelMapper.map(user, UserCreatedPostsByDate.class);
         userAllPosts.setPosts(userAllPosts.getPosts().
-                stream().sorted((p1,p2)->p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
+                stream().sorted((p1, p2) -> p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
         return ResponseEntity.ok(userAllPosts);
     }
+
     public ResponseEntity<UserCreatedPostsByDate> getAllCreatedPostsByVote(HttpServletRequest request) {
         User user = userRepository.getById(userRepository.getIdByRequest(request));
-        UserCreatedPostsByDate userAllPosts = modelMapper.map(user,UserCreatedPostsByDate.class);
+        UserCreatedPostsByDate userAllPosts = modelMapper.map(user, UserCreatedPostsByDate.class);
         userAllPosts.setPosts(userAllPosts.getPosts().
-                stream().sorted((p1,p2)->p2.getUpvotes()-(p1.getUpvotes())).collect(Collectors.toList()));
+                stream().sorted((p1, p2) -> p2.getUpvotes() - (p1.getUpvotes())).collect(Collectors.toList()));
         return ResponseEntity.ok(userAllPosts);
     }
 
     public ResponseEntity<UserCreatedPostsByDate> getUserByIdWithAllPosts(long userId) {
         User user = userRepository.getById(userId);
 
-        UserCreatedPostsByDate userAllPosts = modelMapper.map(user,UserCreatedPostsByDate.class);
+        UserCreatedPostsByDate userAllPosts = modelMapper.map(user, UserCreatedPostsByDate.class);
         userAllPosts.setPosts(userAllPosts.getPosts().
-                stream().sorted((p1,p2)->p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
+                stream().sorted((p1, p2) -> p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
         return ResponseEntity.ok(userAllPosts);
     }
 
@@ -312,30 +327,30 @@ public class UserServices {
     public ResponseEntity<UserResponseDto> addCategory(long cId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         Optional<Category> category = categoryRepository.findById(cId);
-        if (category.isPresent()){
-            if (user.getCategories().contains(category.get())){
+        if (category.isPresent()) {
+            if (user.getCategories().contains(category.get())) {
                 throw new BadRequestException("Category already exist !");
             }
-        user.getCategories().add(categoryRepository.getById(cId));
-        category.get().getUsers().add(user);
-        categoryRepository.save(category.get());
-        return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
-    }
+            user.getCategories().add(categoryRepository.getById(cId));
+            category.get().getUsers().add(user);
+            categoryRepository.save(category.get());
+            return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
+        }
         throw new NotFoundException("Category not found !");
     }
 
     public ResponseEntity<UserResponseDto> removeCategory(long cId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         Optional<Category> category = categoryRepository.findById(cId);
-        if (category.isPresent()){
-            if (!user.getCategories().contains(category.get())){
+        if (category.isPresent()) {
+            if (!user.getCategories().contains(category.get())) {
                 throw new BadRequestException("Category is not in the favorites !");
             }
             user.getCategories().remove(category.get());
             userRepository.save(user);
             category.get().getUsers().remove(user);
             categoryRepository.save(category.get());
-            return ResponseEntity.ok(modelMapper.map(user,UserResponseDto.class));
+            return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
         }
         throw new NotFoundException("Category not found !");
     }
@@ -344,28 +359,23 @@ public class UserServices {
 
         String emailUser = userEditDto.getEmail();
         User user = userRepository.findUserByEmail(emailUser);
-        if (user == null){
+        if (user == null) {
             throw new NotFoundException("User not found");
         }
         String token = randomStringUtils;
 
-        Thread sender = new Thread(() -> sendEmail.SendEmailChangePassword(emailUser,token,user.getId()));
+        new Thread(() -> sendEmail.SendEmailChangePassword(emailUser, token, user.getId())).start();
         user.setToken(token);
         userRepository.save(user);
-        sender.start();
 
-       return ResponseEntity.ok("Please check your email !");
-//       if (user != null){
-//           email.SendEmail(user.getEmail() );
-//
-//       }
+        return ResponseEntity.ok("Please check your email !");
 
     }
 
     public ResponseEntity<String> verifyUser(long id, String token) {
         Optional<User> user = userRepository.findById(id);
-        if (user.isPresent()){
-            if (user.get().getToken().equals(token)){
+        if (user.isPresent()) {
+            if (user.get().getToken().equals(token)) {
                 user.get().setToken(null);
                 user.get().setVerified(true);
                 userRepository.save(user.get());
@@ -378,30 +388,29 @@ public class UserServices {
         throw new NotFoundException("User not found !");
     }
 
-    public ResponseEntity<String> setNewPassword(long id, String token,UserEditDto userEditDto) {
+    public ResponseEntity<String> setNewPassword(long id, String token, UserEditDto userEditDto) {
         Optional<User> user = userRepository.findById(id);
-        if (user.isPresent()){
-            if (userEditDto.getNewPassword() == null){
+        if (user.isPresent()) {
+            if (userEditDto.getNewPassword() == null) {
                 throw new BadRequestException("Password is mandatory !");
             }
             if (!user.get().getToken().equals(token)) {
                 throw new UnauthorizedException("Please check your email again !");
             }
-                if (!userEditDto.getNewPassword().matches(regexPassword)){
-                    throw new BadRequestException("Invalid password, try again !");
-                }
-                if (!userEditDto.getNewPassword().equals(userEditDto.getConfirmNewPassword())){
-                    throw new BadRequestException("Password miss match !");
-                }
-            System.out.println(userEditDto.getPassword());
-                user.get().setPassword(passwordEncoder.encode(userEditDto.getNewPassword()));
-                userRepository.save(user.get());
-            return ResponseEntity.ok("Please login !");
+            if (!userEditDto.getNewPassword().matches(regexPassword)) {
+                throw new BadRequestException("Invalid password, try again !");
             }
+            if (!userEditDto.getNewPassword().equals(userEditDto.getConfirmNewPassword())) {
+                throw new BadRequestException("Password miss match !");
+            }
+            user.get().setPassword(passwordEncoder.encode(userEditDto.getNewPassword()));
+            userRepository.save(user.get());
+            return ResponseEntity.ok("Please login !");
+        }
         throw new NotFoundException("User not found");
 
 
-        }
+    }
 
 
 }

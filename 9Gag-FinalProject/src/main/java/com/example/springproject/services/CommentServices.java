@@ -1,5 +1,6 @@
 package com.example.springproject.services;
 
+import com.example.springproject.ValidateData;
 import com.example.springproject.dto.CommentResponseDto;
 import com.example.springproject.dto.CommentWithoutOwnerDto;
 import com.example.springproject.dto.PostWithoutCommentPostDto;
@@ -20,12 +21,14 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -46,116 +49,116 @@ public class CommentServices {
     private ModelMapper modelMapper;
     @Autowired
     private PostServices postServices;
+    @Autowired
+    private FileServices fileServices;
+
 
     public ResponseEntity<CommentResponseDto> createComment(MultipartFile file, String text, long postId, HttpServletRequest request) {
+
         if (text == null && file == null) {
             throw new BadRequestException("Please enter a comment");
         }
-        long userId = userRepository.getIdByRequest(request);
-        Optional<Post> post = postRepository.findById(postId);
-        Optional<User> commentOwner = userRepository.findById(userId);
-        if (post.isPresent()) {
-            Comment comment = new Comment();
-            if (!file.isEmpty()) {
-                String ext = FilenameUtils.getExtension(file.getOriginalFilename());
-                String name = System.nanoTime() + "." + ext;
-                try {
-                    Files.copy(file.getInputStream(), new File("commentImages" + File.separator + name).toPath());
-                    comment.setMediaUrl(name);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
+        Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("Post not found"));
+        User commentOwner = userRepository.getUserByRequest(request);
+        Comment comment = new Comment();
+        if (!file.isEmpty()) {
+            fileServices.validateMediaType(file, true);
+            String ext = FilenameUtils.getExtension(file.getOriginalFilename());
+            String name = System.nanoTime() + "." + ext;
+            try {
+                Files.copy(file.getInputStream(), new File("media" + File.separator + "commentImages" + File.separator + name).toPath());
+                comment.setMediaUrl(name);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            if (text != null) {
-                comment.setText(text);
-            }
-            comment.setCommentOwner(commentOwner.get());
-            comment.setDateTime(LocalDateTime.now());
-            comment.setPost(post.get());
-            commentRepository.save(comment);
-            CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
-            commentResponseDto.setUserId(userId);
-            return ResponseEntity.ok(commentResponseDto);
         }
-        throw new NotFoundException("Post not found !");
+        if (text != null) {
+            comment.setText(text);
+        }
+        comment.setCommentOwner(commentOwner);
+        comment.setDateTime(LocalDateTime.now());
+        comment.setPost(post);
+        commentRepository.save(comment);
+        CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
+        commentResponseDto.setUserId(commentOwner.getId());
+
+        return ResponseEntity.ok(commentResponseDto);
 
     }
-
+    @Transactional(rollbackFor = SQLException.class)
     public ResponseEntity<CommentResponseDto> upVoteComment(long commentId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
-        Optional<Comment> comment = commentRepository.findById(commentId);
-        if (!comment.isPresent()){
-            throw new NotFoundException("Comment not found !");
-        }
-        if (comment.get().getDownVoters().contains(user)) {
-            comment.get().getDownVoters().remove(user);
-            comment.get().setDownvotes(comment.get().getDownVoters().size());
-            commentRepository.save(comment.get());
-        }
-        if (!comment.get().getUppVoters().contains(user)) {
-            comment.get().getUppVoters().add(user);
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("Comment not found !"));
 
-            CommentResponseDto commentResponseDto = modelMapper.map(comment.get(),CommentResponseDto.class);
-            commentResponseDto.setUpvotes(comment.get().getUppVoters().size());
-            commentRepository.save(comment.get());
+        if (comment.getDownVoters().contains(user)) {
+            comment.getDownVoters().remove(user);
+            comment.setDownvotes(comment.getDownVoters().size());
+            commentRepository.save(comment);
+        }
+        if (!comment.getUppVoters().contains(user)) {
+            comment.getUppVoters().add(user);
+
+            CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
+            commentResponseDto.setUpvotes(comment.getUppVoters().size());
+            commentResponseDto.setUserId(user.getId());
+            comment.setUpvotes(comment.getUppVoters().size());
+            commentRepository.save(comment);
             return ResponseEntity.ok(commentResponseDto);
         }
-
-
         throw new BadRequestException("The user already upvote this comment !");
     }
 
-    public ResponseEntity<CommentResponseDto> dowVoteComment(long commentId, HttpServletRequest request) {
+    public ResponseEntity<CommentResponseDto> downVoteComment(long commentId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
-        Optional<Comment> comment = commentRepository.findById(commentId);
-        if (comment.isPresent()) {
-            if (comment.get().getUppVoters().contains(user)) {
-                comment.get().getUppVoters().remove(user);
-                comment.get().setUpvotes(comment.get().getUppVoters().size());
-                commentRepository.save(comment.get());
-            }
-            if (!comment.get().getDownVoters().contains(user)) {
-                user.getDownVote().add(comment.get());
-                comment.get().getDownVoters().add(user);
-                comment.get().setDownvotes(comment.get().getDownVoters().size());
-                commentRepository.save(comment.get());
-                return ResponseEntity.ok(modelMapper.map(comment.get(), CommentResponseDto.class));
-            }
-            throw new BadRequestException("The user already downvote this comment !");
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("Comment not found !"));
+
+        if (comment.getUppVoters().contains(user)) {
+            comment.getUppVoters().remove(user);
+            comment.setUpvotes(comment.getUppVoters().size());
+            commentRepository.save(comment);
         }
-        throw new NotFoundException("Comment not found !");
+        if (!comment.getDownVoters().contains(user)) {
+            user.getDownVote().add(comment);
+            comment.getDownVoters().add(user);
+            comment.setDownvotes(comment.getDownVoters().size());
+            commentRepository.save(comment);
+            CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
+            commentResponseDto.setUserId(user.getId());
+            return ResponseEntity.ok(commentResponseDto);
+        }
+        throw new BadRequestException("The user already downvote this comment !");
+
     }
 
-    public ResponseEntity<CommentWithoutOwnerDto> removeVot(long commentId, HttpServletRequest request) {
+    @Transactional
+    public ResponseEntity<CommentResponseDto> removeVot(long commentId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
-        Optional<Comment> comment = commentRepository.findById(commentId);
-        if (!comment.isPresent()) {
-            throw new NotFoundException("Comment not found !");
+        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("Comment not found !"));
+
+        if (comment.getDownVoters().contains(user)) {
+            comment.getDownVoters().remove(user);
+            comment.setDownvotes(comment.getDownVoters().size());
+            commentRepository.save(comment);
+            CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
+            commentResponseDto.setUserId(user.getId());
+            return ResponseEntity.ok(commentResponseDto);
         }
-        if (comment.get().getDownVoters().contains(user)) {
-            comment.get().getDownVoters().remove(user);
-            comment.get().setDownvotes(comment.get().getDownVoters().size());
-            commentRepository.save(comment.get());
-            return ResponseEntity.ok(modelMapper.map(comment.get(),CommentWithoutOwnerDto.class));
-        }
-        if (comment.get().getUppVoters().contains(user)) {
-            comment.get().getUppVoters().remove(user);
-            comment.get().setUpvotes(comment.get().getUppVoters().size());
-            user.getUpVoteComments().remove(comment.get());
-            userRepository.save(user);
-            commentRepository.save(comment.get());
-            return ResponseEntity.ok(modelMapper.map(comment.get(),CommentWithoutOwnerDto.class));
+        if (comment.getUppVoters().contains(user)) {
+            comment.getUppVoters().remove(user);
+            comment.setUpvotes(comment.getUppVoters().size());
+            commentRepository.save(comment);
+            CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
+            commentResponseDto.setUserId(user.getId());
+
+            return ResponseEntity.ok(commentResponseDto);
         }
         throw new UnauthorizedException("Тhe user didn't vote !");
     }
 
-
-
     public Set<DisplayPostDto> getAllCommentPosts(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         Set<DisplayPostDto> allCommentedPosts = new TreeSet<>((p1, p2) -> {
-            if(p1.getId() == p2.getId()) return 0;
+            if (p1.getId() == p2.getId()) return 0;
             return p2.getUploadDate().compareTo(p1.getUploadDate()) == 0 ? 1 : p2.getUploadDate().compareTo(p1.getUploadDate());
         });
         for (Comment c : user.getComments()) {
@@ -164,38 +167,13 @@ public class CommentServices {
         return allCommentedPosts;
     }
 
-//    public Set<PostWithoutCommentPostDto> getAllCommentPosts(HttpServletRequest request) {
-//        User user = userRepository.getUserByRequest(request);
-//        Set<DisplayPostDto> allCommentedPosts = new TreeSet<>((p1, p2) -> {
-//            if(p1.getId() == p2.getId()) return 0;
-//            return p2.getUploadDate().compareTo(p1.getUploadDate()) == 0 ? 1 : p2.getUploadDate().compareTo(p1.getUploadDate());
-//        });
-//        for (Comment c : user.getComments()) {
-//            allCommentedPosts.add(postServices.PostToDisplayPostDtoConversion(c.getPost()));
-//        }
-//        return allCommentedPosts;
-//    }
-
-
-//    public Set<DisplayPostDto> getAllCommentPosts(HttpServletRequest request) {
-//        User user = userRepository.getUserByRequest(request);
-//        Set<DisplayPostDto> allCommentedPosts = new TreeSet<>((p1, p2) -> {
-//            return p2.getUploadDate().compareTo(p1.getUploadDate());
-//        });
-//        for (Comment c : user.getComments()) {
-//            allCommentedPosts.add(postServices.PostToDisplayPostDtoConversion(c.getPost()));
-//        }
-//        return allCommentedPosts;
-//    }
 
     public AllCommentsOnPostDto getAllCommentByPostId(long postId) {
-        Optional<Post> post = postRepository.findById(postId);
-        if (post.isPresent()) {
-            AllCommentsOnPostDto allComments = modelMapper.map(post.get(), AllCommentsOnPostDto.class);
-            allComments.setComments(allComments.getComments().stream().sorted((c1, c2) -> (int) (c2.getUpvotes() - c1.getUpvotes())).collect(Collectors.toList()));
-            return allComments;
-        }
-        throw new NotFoundException("Post not found !");
+        Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("Post not found !"));
+        AllCommentsOnPostDto allComments = modelMapper.map(post, AllCommentsOnPostDto.class);
+        allComments.setComments(allComments.getComments().stream().sorted((c1, c2) ->
+                (int) (c2.getUpvotes() - c1.getUpvotes())).collect(Collectors.toList()));
+        return allComments;
 
     }
 
@@ -210,7 +188,8 @@ public class CommentServices {
         }
         throw new NotFoundException("Post not found !");
     }
-    public ResponseEntity<CommentResponseDto> removeComment(long commendId, HttpServletRequest request){
+
+    public ResponseEntity<CommentResponseDto> removeComment(long commendId, HttpServletRequest request) {
 
         User user = userRepository.getUserByRequest(request);
         Optional<Comment> comment = commentRepository.findById(commendId);
@@ -218,20 +197,23 @@ public class CommentServices {
             if (comment.get().getCommentOwner() != user && comment.get().getPost().getOwner() != user) {
                 throw new UnauthorizedException("The user is not the owner of the comment!");
             }
-                commentRepository.delete(comment.get());
-            return ResponseEntity.ok(modelMapper.map(comment.get(),CommentResponseDto.class));
+            if (comment.get().getMediaUrl() != null) {
+                File fileToDel = new File("media" + File.separator + "commentImages" + File.separator + comment.get().getMediaUrl());
+                fileToDel.delete();
+            }
+            commentRepository.delete(comment.get());
+            return ResponseEntity.ok(modelMapper.map(comment.get(), CommentResponseDto.class));
         }
         throw new NotFoundException("Comment not found !");
     }
 
     public ResponseEntity<UserWithCommentsDto> getAllCommentsUser(HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
-        UserWithCommentsDto userWithCommentsDto = modelMapper.map(user,UserWithCommentsDto.class);
+        UserWithCommentsDto userWithCommentsDto = modelMapper.map(user, UserWithCommentsDto.class);
         userWithCommentsDto.setComments(userWithCommentsDto.getComments().stream()
-                .sorted((c1, c2)->(c2.getDateTime().compareTo(c1.getDateTime()))).collect(Collectors.toList()));
-                //allComments.setComments(allComments.getComments().stream()
-                //           .sorted((c1, c2) -> (c2.getDateTime().compareTo(c1.getDateTime()))).collect(Collectors.toList()));
+                .sorted((c1, c2) -> (c2.getDateTime().compareTo(c1.getDateTime()))).collect(Collectors.toList()));
         return ResponseEntity.ok(userWithCommentsDto);
     }
+
 }
 

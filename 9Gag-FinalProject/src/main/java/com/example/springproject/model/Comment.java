@@ -6,6 +6,8 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -48,4 +50,7 @@ public class Comment {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private Set<User> downVoters;
+
+    //private Set<Comment> answers;
+
 }
