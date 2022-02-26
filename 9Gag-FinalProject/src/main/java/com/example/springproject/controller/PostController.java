@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -61,10 +62,9 @@ public class PostController {
                                                      HttpServletRequest request,
                                                      HttpSession session){
         userController.validateLogin(request);
-
-        String nameAndExt = postServices.saveMedia(file);
         long userId = (Long)session.getAttribute(UserController.User_Id);
-        Post p = postServices.create(description, nameAndExt, categoryId, userId);
+
+        Post p = postServices.create(description, file, categoryId, userId);
         postRepository.save(p);
         DisplayPostDto pDto = postServices.PostToDisplayPostDtoConversion(p);
         return ResponseEntity.status(HttpStatus.OK).body(pDto);
@@ -148,16 +148,13 @@ public class PostController {
                 .stream().sorted((p1, p2) -> p2.getUpvotes() - (p1.getUpvotes())).collect(Collectors.toList()));
         return ResponseEntity.ok(userWithAllSavedPostDto);
     }
-//    @GetMapping("/users/comments")
-//    public ResponseEntity<List<Post>> getCommentedPosts(@RequestParam("id") long id, HttpServletRequest request) {
-//        userController.validateLogin(request);
-//        return null;
-//    }
     @DeleteMapping("/posts/{id}/delete")
     public void deletePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
         Post p = postServices.getPostById(id);
         if(p.getOwner().getId() == (Long)session.getAttribute(UserController.User_Id)) {//if current user is owner
+            File fileToDel = new File("media" + File.separator + "postMedia" + File.separator + postRepository.getById(id).getMediaUrl());
+            fileToDel.delete();
             postRepository.deleteById(id);
         }
         else {

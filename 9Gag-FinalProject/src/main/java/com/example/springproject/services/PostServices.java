@@ -16,15 +16,20 @@ import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
+import lombok.SneakyThrows;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.tika.Tika;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.net.FileNameMap;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -35,6 +40,7 @@ public class PostServices {
 
     private static final String ONLY_WORDS_REGEX = "[^a-zA-Z]";
     private static final String URL_REGEX = "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\\\+~#?&//=]{2,256}\\\\.[a-z]{2,6}\\\\b([-a-zA-Z0-9@:%._\\\\+~#?&//=]*)";
+    private static final boolean PHOTO_AND_VIDEO = false;
 
     @Autowired
     private UserRepository userRepository;
@@ -44,14 +50,16 @@ public class PostServices {
     private PostRepository postRepository;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private FileServices fileServices;
+    @Autowired
+    private PostServices postServices;
 
-    public Post create(String description, String mediaUrl, int categoryId, long userId) {
+    public Post create(String description, MultipartFile file, int categoryId, long userId) {
 
+        String nameAndExt = postServices.saveMedia(file);
         if(description == null || description.isBlank() || description.length() <= 2) {
             throw new BadRequestException("post description is missing or is less than 3 symbols");
-        }
-        if(mediaUrl == null || mediaUrl.matches(URL_REGEX)){
-            throw new BadRequestException("post media url is missing or is not correct");
         }
         if(categoryId <= 0 || !categoryRepository.existsById((long)categoryId)) {
             throw new NotFoundException("category with id=" + categoryId + " doesn't exist");
@@ -61,7 +69,7 @@ public class PostServices {
         }
         Post p = new Post();
         p.setDescription(description);
-        p.setMediaUrl(mediaUrl);
+        p.setMediaUrl(nameAndExt);
         p.setCategory(categoryRepository.getById((long) categoryId));
         p.setOwner(userRepository.getById(userId));
 
@@ -117,7 +125,7 @@ public class PostServices {
         return p;
     }
     public Post getPostById(long postId) {
-        return postRepository.findById(postId).orElseThrow(() -> new NotFoundException("post with id=" + postId + "doesn't exist"));
+        return postRepository.findById(postId).orElseThrow(() -> new NotFoundException("post with id=" + postId + " doesn't exist"));
     }
 
     public User savedPost(int postId, long userId) {
@@ -180,10 +188,9 @@ public class PostServices {
     }
 
     public List<DisplayPostDto> searchPostGenerator(String search) {
-        ArrayList<String> words = this.extractWords(search);
-
+        ArrayList<String> words = this.extractWords(search); //length of the search
         ArrayList<String> descriptions = new ArrayList<>(postRepository.findAllPostDescriptions());
-        ArrayList<Integer> ids = new ArrayList<>(postRepository.findAllPostIds());
+        ArrayList<Integer> postIds = new ArrayList<>(postRepository.findAllPostIds());
 
         for (String s : descriptions) { //test print
             System.out.println(s);
@@ -191,11 +198,11 @@ public class PostServices {
         Map<Long, Integer> numberOfFoundWords = new HashMap<>();
         Map<Long, String> descWithId = new HashMap<>();
 
-        for (int i = 0; i < ids.size(); i++) {
-            numberOfFoundWords.put((long)ids.get(i), 0);
-            descWithId.put((long)ids.get(i), descriptions.get(i).toLowerCase());
+        for (int i = 0; i < postIds.size(); i++) { // 2 * number of posts
+            numberOfFoundWords.put((long)postIds.get(i), 0);
+            descWithId.put((long)postIds.get(i), descriptions.get(i).toLowerCase());
         }
-        this.countFoundKeywords(words, numberOfFoundWords, descWithId);
+        this.countFoundKeywords(words, numberOfFoundWords, descWithId);// number of descriptions * search * average length of description
 
         for (Map.Entry<Long, Integer> e : numberOfFoundWords.entrySet()) { //test print
             System.out.println(e.getKey() + " " + e.getValue());
@@ -256,8 +263,8 @@ public class PostServices {
             throw new NotFoundException("No posts were found.");
         }
     }
-
-    public String saveMedia(MultipartFile file) throws IOException {
+    @SneakyThrows
+    public String saveMedia(MultipartFile file) {
         if(file.isEmpty()) {
             throw new UnauthorizedException("File is empty.");
         }
@@ -265,11 +272,10 @@ public class PostServices {
         if(file.getSize() > 1024 * 1024 * 100) {// 100 mb
             throw new UnauthorizedException("File is too large. Limit is 100 mb");
         }
+        fileServices.validateMediaType(file, PHOTO_AND_VIDEO);
+
         String name = String.valueOf(System.nanoTime());
         String ext = FilenameUtils.getExtension(file.getOriginalFilename());
-        if(ext == null || !ext.matches("jpg|png|gif|bmp") && !ext.matches("mov|mp4|webm|mkv")) {
-            throw new ForbiddenException("This format of the media is not allowed.");
-        }
         String nameAndExt = name + "." + ext;
         File destination = new File("media" + File.separator + "postMedia" + File.separator + nameAndExt);
         Files.copy(file.getInputStream(), Path.of(destination.toURI()));
