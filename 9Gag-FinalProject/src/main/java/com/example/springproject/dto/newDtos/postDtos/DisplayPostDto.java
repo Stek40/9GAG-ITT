@@ -1,6 +1,8 @@
 package com.example.springproject.dto.newDtos.postDtos;
 
 import com.example.springproject.dto.PostWithoutCommentPostDto;
+import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
+import com.example.springproject.model.Category;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,6 +22,6 @@ public class DisplayPostDto {
     private int downvotes;
     private long userId;
     private LocalDateTime uploadDate;
-    private String category;
+    private CategoryDto category;
 
 }

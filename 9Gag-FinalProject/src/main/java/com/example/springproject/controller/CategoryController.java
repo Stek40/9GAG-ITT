@@ -1,13 +1,9 @@
 package com.example.springproject.controller;
 
-import com.example.springproject.dto.CategoryWithPostsDto;
-import com.example.springproject.dto.CategoryWithoutPostsDto;
+import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
-import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.model.Category;
-import com.example.springproject.model.Post;
 import com.example.springproject.repositories.CategoryRepository;
-import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.services.CategoryServices;
 import com.example.springproject.services.PostServices;
 import org.modelmapper.ModelMapper;
@@ -38,5 +34,9 @@ public class CategoryController {
         //no login
         List<DisplayPostDto> pDtos = categoryServices.allPostsByCategory(id, isByUpvotes);
         return ResponseEntity.ok().body(pDtos);
+    }
+    @GetMapping("/categories")
+    public ResponseEntity<List<CategoryDto>> getAllCategories() {
+        return ResponseEntity.ok(categoryServices.getAll());
     }
 }

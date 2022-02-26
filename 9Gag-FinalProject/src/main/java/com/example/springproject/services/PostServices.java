@@ -1,15 +1,12 @@
 package com.example.springproject.services;
 
-import com.example.springproject.controller.UserController;
-import com.example.springproject.dto.CategoryWithoutPostsDto;
 //import com.example.springproject.dto.PostWithCategoryDto;
 //import com.example.springproject.dto.PostWithoutOwnerDto;
-import com.example.springproject.dto.UserWithoutPostsDto;
+import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.dto.newDtos.postDtos.PostVoteResultsDto;
 import com.example.springproject.exceptions.BadRequestException;
-import com.example.springproject.exceptions.ForbiddenException;
-import com.example.springproject.exceptions.NotFoundException;
+        import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
 import com.example.springproject.model.Post;
 import com.example.springproject.model.User;
@@ -18,19 +15,13 @@ import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.tika.Tika;
-import org.modelmapper.ModelMapper;
+        import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.activation.MimetypesFileTypeMap;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.net.FileNameMap;
-import java.net.URLConnection;
-import java.nio.file.Files;
+        import java.io.File;
+        import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -176,7 +167,7 @@ public class PostServices {
     public DisplayPostDto PostToDisplayPostDtoConversion(Post p) {
         DisplayPostDto pDto = modelMapper.map(p, DisplayPostDto.class);
         pDto.setUserId(p.getOwner().getId());
-        pDto.setCategory(p.getCategory().getName());
+        pDto.setCategory(modelMapper.map(p.getCategory(), CategoryDto.class));
         return pDto;
     }
     public List<DisplayPostDto> PostToDisplayPostDtoConversionCollection(List<Post> posts) {

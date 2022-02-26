@@ -1,7 +1,7 @@
 package com.example.springproject.dto;
 
 
-import com.example.springproject.dto.newDtos.categoriesDto.CategoryWithOutUserDto;
+import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
 import com.example.springproject.model.Post;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +19,7 @@ public class UserResponseDto {
     private String profile_picture_url;
     private boolean show_sensitive_content;
     private boolean hidden;
-    private Set<CategoryWithOutUserDto> categories;
+    private Set<CategoryDto> categories;
 
 
 }

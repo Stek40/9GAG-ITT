@@ -1,12 +1,15 @@
 package com.example.springproject.services;
 
+import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.model.Category;
 import com.example.springproject.repositories.CategoryRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -18,6 +21,8 @@ public class CategoryServices {
     PostServices postServices;
     @Autowired
     CategoryServices categoryServices;
+    @Autowired
+    private ModelMapper modelMapper;
 
 
     public Category getCategory(long id) {
@@ -35,4 +40,12 @@ public class CategoryServices {
         return pDtos;
     }
 
+    public List<CategoryDto> getAll() {
+        List<Category> allCategories = categoryRepository.findAll();
+        List<CategoryDto> cDtos = new ArrayList<>();
+        for (Category c : allCategories) {
+            cDtos.add(modelMapper.map(c, CategoryDto.class));
+        }
+        return cDtos;
+    }
 }
