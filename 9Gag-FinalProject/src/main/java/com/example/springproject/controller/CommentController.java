@@ -3,7 +3,6 @@ import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
 import com.example.springproject.dto.newDtos.comment.AllCommentsOnPostDto;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
-import com.example.springproject.model.Comment;
 import com.example.springproject.services.CommentServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +17,7 @@ public class CommentController {
 
     @Autowired
     CommentServices commentServices;
+
 
 
     @PutMapping("comment/add")
@@ -41,11 +41,11 @@ public class CommentController {
     public ResponseEntity<CommentResponseDto> downVote(@RequestParam(name = "commentId") long commentId,
                                                        HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        return commentServices.dowVoteComment(commentId, request);
+        return commentServices.downVoteComment(commentId, request);
     }
 
     @PutMapping("/comment/removeVote")
-    public ResponseEntity<CommentWithoutOwnerDto> removeVot(@RequestParam(name = "commentId") long commentId,
+    public ResponseEntity<CommentResponseDto> removeVot(@RequestParam(name = "commentId") long commentId,
                                                             HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         return commentServices.removeVot(commentId, request);
@@ -63,12 +63,6 @@ public class CommentController {
         return ResponseEntity.ok(commentServices.getAllCommentPosts(request));
     }
 
-    //    @GetMapping("comment/getAllPosts")
-//        public ResponseEntity<Set<DisplayPostDto>> getAllCommentPosts(HttpServletRequest request) {
-//        ValidateData.validatorLogin(request);
-//
-//        return ResponseEntity.ok(commentServices.getAllCommentPosts(request));
-//    }
     @GetMapping("/allCommentByVote/post")
     public AllCommentsOnPostDto getAllCommentsByUpVote(@RequestParam(name = "id") long postId) {
         return commentServices.getAllCommentByPostId(postId);
@@ -79,7 +73,7 @@ public class CommentController {
         return commentServices.getAllCommentByPostDate(postId);
     }
 
-    @PutMapping("/comment/remove")
+    @DeleteMapping("/comment/remove")
     public ResponseEntity<CommentResponseDto> removeComment(@RequestParam(name = "commentId") long postId, HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         return commentServices.removeComment(postId, request);

@@ -38,32 +38,35 @@ public class FileController {
     FileServices fileServices;
 
     @GetMapping("/files/profilePicture/download")
-    public void download(HttpServletResponse response,HttpServletRequest request){
-        //userController.validateLogin(request);
-        String filename = userRepository.getById((Long) request.getSession().getAttribute(UserController.User_Id)).getProfile_picture_url();
-        File file = new File("uploads"+ File.separator + filename);
+    public void download(HttpServletResponse response, HttpServletRequest request) {
+        userController.validateLogin(request);
+        String filename = userRepository.getUserByRequest(request).getProfile_picture_url();
+        System.out.println(filename);
+        File file = new File("media" + File.separator + "profilePictures" + File.separator + filename);
         try {
-            Files.copy(file.toPath(),response.getOutputStream());
+            Files.copy(file.toPath(), response.getOutputStream());
         } catch (IOException e) {
             throw new NotFoundException("Profile picture not found !");
         }
     }
+
     @GetMapping("/files/post/download")
-    public void downloadPostMedia(@RequestParam (name = "postId") long postId, HttpServletResponse response, HttpServletRequest request){
+    public void downloadPostMedia(@RequestParam(name = "postId") long postId, HttpServletResponse response, HttpServletRequest request) {
         File f = fileServices.getFileFromPost(postId);
         try {
-            Files.copy(f.toPath(),response.getOutputStream());
+            Files.copy(f.toPath(), response.getOutputStream());
         } catch (IOException e) {
             throw new NotFoundException("Post media not found.");
         }
     }
+
     @GetMapping("/files/comment/download")
-    public ResponseEntity<CommentWithMediaDto> getComment(@RequestParam (name = "commentId") long cId, HttpServletResponse response){
+    public ResponseEntity<CommentWithMediaDto> getComment(@RequestParam(name = "commentId") long cId, HttpServletResponse response) {
         Optional<Comment> comment = repository.findById(cId);
         if (comment.isPresent()) {
-            File file = new File("commentImages"+ File.separator + comment.get().getMediaUrl());
+            File file = new File("media" + File.separator + "commentImages" + File.separator + comment.get().getMediaUrl());
             try {
-                Files.copy(file.toPath(),response.getOutputStream());
+                Files.copy(file.toPath(), response.getOutputStream());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -71,7 +74,7 @@ public class FileController {
             CommentWithMediaDto commentWithMediaDto = new CommentWithMediaDto();
             commentWithMediaDto.setText(comment.get().getText());
             return ResponseEntity.ok(commentWithMediaDto);
-         }
-         throw new NotFoundException("Comment not found !");
+        }
+        throw new NotFoundException("Comment not found !");
     }
 }
