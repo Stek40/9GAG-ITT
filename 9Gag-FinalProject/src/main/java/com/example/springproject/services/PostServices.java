@@ -1,13 +1,12 @@
 package com.example.springproject.services;
 
-//import com.example.springproject.dto.PostWithCategoryDto;
-//import com.example.springproject.dto.PostWithoutOwnerDto;
 import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.dto.newDtos.postDtos.PostVoteResultsDto;
 import com.example.springproject.exceptions.BadRequestException;
         import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
+import com.example.springproject.model.Category;
 import com.example.springproject.model.Post;
 import com.example.springproject.model.User;
 import com.example.springproject.repositories.CategoryRepository;
@@ -18,15 +17,17 @@ import org.apache.commons.io.FilenameUtils;
         import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.print.Pageable;
 import java.io.File;
-        import java.nio.file.Files;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static com.example.springproject.controller.PostController.POSTS_PER_PAGE;
 
 @Service
 public class PostServices {
@@ -34,6 +35,7 @@ public class PostServices {
     private static final String ONLY_WORDS_REGEX = "[^a-zA-Z]";
     private static final String URL_REGEX = "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\\\+~#?&//=]{2,256}\\\\.[a-z]{2,6}\\\\b([-a-zA-Z0-9@:%._\\\\+~#?&//=]*)";
     private static final boolean PHOTO_AND_VIDEO = false;
+    private static final int MEDIA_MAX_SIZE = 1024 * 1024 * 100; //100 MB
 
     @Autowired
     private UserRepository userRepository;
@@ -261,7 +263,7 @@ public class PostServices {
             throw new UnauthorizedException("File is empty.");
         }
         System.out.println(file.getSize());
-        if(file.getSize() > 1024 * 1024 * 100) {// 100 mb
+        if(file.getSize() > MEDIA_MAX_SIZE) {
             throw new UnauthorizedException("File is too large. Limit is 100 mb");
         }
         fileServices.validateMediaType(file, PHOTO_AND_VIDEO);
@@ -274,7 +276,16 @@ public class PostServices {
         return nameAndExt;
     }
 
-    public ArrayList<Post> postsSetToList(Set<Post> set) {
-        return new ArrayList<>(set);
+    public List<DisplayPostDto> allPostsByCategory(Category c, boolean isByUpvotes, int pageNumber) {
+        List<DisplayPostDto> pDtos;
+        List<Post> posts;
+        if(isByUpvotes) {
+            posts = postRepository.findAllByCategoryId(c.getId(), PageRequest.of(pageNumber, POSTS_PER_PAGE));
+            pDtos = postServices.PostToDisplayPostDtoConversionCollection(postServices.sortPostsByUpvotes(posts));
+        } else {
+            posts = postRepository.findAllByCategoryId(c.getId(), PageRequest.of(pageNumber, POSTS_PER_PAGE, Sort.by("upload_date").descending()));
+            pDtos = postServices.PostToDisplayPostDtoConversionCollection(posts);
+        }
+        return pDtos;
     }
 }

@@ -29,14 +29,9 @@ public class CategoryServices {
         return categoryRepository.findById(id).orElseThrow(() -> new NotFoundException("category with id=" + id + " doesn't exist"));
     }
 
-    public List<DisplayPostDto> allPostsByCategory(long categoryId, boolean isByUpvotes) {
+    public List<DisplayPostDto> allPostsByCategory(long categoryId, boolean isByUpvotes, int pageNumber) {
         Category c = categoryServices.getCategory(categoryId);
-        List<DisplayPostDto> pDtos;
-        if(isByUpvotes) {
-            pDtos = postServices.PostToDisplayPostDtoConversionCollection(postServices.sortPostsByUpvotes(postServices.postsSetToList(c.getPosts())));
-        } else {
-            pDtos = postServices.PostToDisplayPostDtoConversionCollection(postServices.sortPostsByDate(postServices.postsSetToList(c.getPosts())));
-        }
+        List<DisplayPostDto> pDtos = postServices.allPostsByCategory(c, isByUpvotes, pageNumber);
         return pDtos;
     }
 

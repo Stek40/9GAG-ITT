@@ -15,7 +15,6 @@ import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import java.io.File;
-import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,7 +46,7 @@ public class PostController {
     public static final int POSTS_PER_PAGE = 5;
 
 
-//   @GetMapping("/martin/allPosts")
+//   @GetMapping("/martin/allPosts"
 //   public ResponseEntity<PostWithoutCommentPostDto>   getlAllPostByDate(){
 //
 //       ArrayList<Post> posts = (ArrayList<Post>) postRepository.findAll();

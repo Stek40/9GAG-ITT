@@ -33,4 +33,8 @@ public interface PostRepository  extends PagingAndSortingRepository<Post, Long> 
             value = "SELECT id FROM posts",
             nativeQuery = true)
     List<Integer> findAllPostIds();
+    @Query(
+            value = "SELECT * FROM posts WHERE category_id = ?",
+            nativeQuery = true)
+    List<Post> findAllByCategoryId(long id, Pageable pageable);
 }
