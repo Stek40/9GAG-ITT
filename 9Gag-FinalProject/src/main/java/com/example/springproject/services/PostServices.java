@@ -17,10 +17,12 @@ import lombok.SneakyThrows;
 import org.apache.commons.io.FilenameUtils;
         import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-        import java.io.File;
+import java.awt.print.Pageable;
+import java.io.File;
         import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -209,7 +211,6 @@ public class PostServices {
         for (Map.Entry<Long, Integer> e : sortedIds) {
             System.out.println(e.getKey() + " " + e.getValue()); //test print
             if(e.getValue() > 0) {
-                //result.add(this.PostToDtoConversion2(postRepository.getById(e.getKey())));
                 result.add(this.PostToDisplayPostDtoConversion(postRepository.getById(e.getKey())));
             }
         }

@@ -14,6 +14,8 @@ import com.example.springproject.services.PostServices;
 import lombok.SneakyThrows;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +44,8 @@ public class PostController {
     private UserController userController;
     @Autowired
     private ModelMapper modelMapper;
+
+    public static final int POSTS_PER_PAGE = 5;
 
 
 //   @GetMapping("/martin/allPosts")
@@ -104,13 +108,13 @@ public class PostController {
         return ResponseEntity.ok().body(pDto);
     }
     @GetMapping("/posts")
-    public ResponseEntity<List<DisplayPostDto>> getAllPosts(@RequestParam("sort_by_upvotes") boolean isByUpvotes) {
+    public ResponseEntity<List<DisplayPostDto>> getAllPosts(@RequestParam("sort_by_upvotes") boolean isByUpvotes, @RequestParam("page") int pageNumber) {
         //no login
         List<Post> allPosts;
         if(isByUpvotes) {
-            allPosts = postRepository.getAllOrderByUpvotes();
+            allPosts = postRepository.getAllOrderByUpvotes(PageRequest.of(pageNumber, POSTS_PER_PAGE));
         } else {
-            allPosts = postRepository.getAllOrderByUploadDate();
+            allPosts = postRepository.getAllOrderByUploadDate(PageRequest.of(pageNumber, POSTS_PER_PAGE));
         }
         List<DisplayPostDto> pDtos = postServices.PostToDisplayPostDtoConversionCollection(allPosts);
         return ResponseEntity.ok().body(pDtos);

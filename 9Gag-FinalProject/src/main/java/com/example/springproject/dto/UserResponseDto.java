@@ -20,6 +20,4 @@ public class UserResponseDto {
     private boolean show_sensitive_content;
     private boolean hidden;
     private Set<CategoryDto> categories;
-
-
 }
