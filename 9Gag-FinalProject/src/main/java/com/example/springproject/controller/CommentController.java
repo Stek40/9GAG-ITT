@@ -1,4 +1,5 @@
 package com.example.springproject.controller;
+
 import com.example.springproject.ValidateData;
 import com.example.springproject.dto.*;
 import com.example.springproject.dto.newDtos.comment.AllCommentsOnPostDto;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
@@ -17,7 +19,6 @@ public class CommentController {
 
     @Autowired
     CommentServices commentServices;
-
 
 
     @PutMapping("comment/add")
@@ -46,7 +47,7 @@ public class CommentController {
 
     @PutMapping("/comment/removeVote")
     public ResponseEntity<CommentResponseDto> removeVot(@RequestParam(name = "commentId") long commentId,
-                                                            HttpServletRequest request) {
+                                                        HttpServletRequest request) {
         ValidateData.validatorLogin(request);
         return commentServices.removeVot(commentId, request);
     }

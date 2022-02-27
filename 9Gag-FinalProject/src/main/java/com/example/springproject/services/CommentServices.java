@@ -1,9 +1,7 @@
 package com.example.springproject.services;
 
-import com.example.springproject.ValidateData;
 import com.example.springproject.dto.CommentResponseDto;
-import com.example.springproject.dto.CommentWithoutOwnerDto;
-import com.example.springproject.dto.PostWithoutCommentPostDto;
+
 import com.example.springproject.dto.UserWithCommentsDto;
 import com.example.springproject.dto.newDtos.comment.AllCommentsOnPostDto;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
@@ -52,7 +50,7 @@ public class CommentServices {
     @Autowired
     private FileServices fileServices;
 
-
+    @Transactional(rollbackFor = SQLException.class)
     public ResponseEntity<CommentResponseDto> createComment(MultipartFile file, String text, long postId, HttpServletRequest request) {
 
         if (text == null && file == null) {
@@ -107,7 +105,7 @@ public class CommentServices {
         }
         throw new BadRequestException("The user already upvote this comment !");
     }
-
+    @Transactional(rollbackFor = SQLException.class)
     public ResponseEntity<CommentResponseDto> downVoteComment(long commentId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("Comment not found !"));
@@ -130,7 +128,7 @@ public class CommentServices {
 
     }
 
-    @Transactional
+    @Transactional(rollbackFor = SQLException.class)
     public ResponseEntity<CommentResponseDto> removeVot(long commentId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("Comment not found !"));

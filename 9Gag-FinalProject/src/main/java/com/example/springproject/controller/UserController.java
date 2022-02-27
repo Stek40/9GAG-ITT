@@ -29,7 +29,6 @@ public class UserController {
     UserServices userServices;
 
 
-
     @GetMapping("/users/verified")
     public ResponseEntity<String> verifiedProfile(@RequestParam(name = "id") long id,
                                                   @RequestParam(name = "?token") String token) {
@@ -60,7 +59,7 @@ public class UserController {
 
     @PostMapping("/users/removeFavouriteCategories")
     public ResponseEntity<UserResponseDto> removeFavouriteCategories(@RequestParam(name = "categoryId")
-                                                                                 long cId, HttpServletRequest request) {
+                                                                             long cId, HttpServletRequest request) {
         validateLogin(request);
         return userServices.removeCategory(cId, request);
     }
@@ -102,7 +101,6 @@ public class UserController {
     public void userLogout(HttpSession session) {
         session.invalidate();
     }
-
 
 
     public void validateLogin(HttpServletRequest request) {

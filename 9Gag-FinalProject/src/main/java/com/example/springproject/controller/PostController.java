@@ -34,8 +34,7 @@ public class PostController {
     private PostRepository postRepository;
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private CategoryRepository categoryRepository;
+
     @Autowired
     private PostServices postServices;
     @Autowired
@@ -46,15 +45,7 @@ public class PostController {
     public static final int POSTS_PER_PAGE = 5;
 
 
-//   @GetMapping("/martin/allPosts"
-//   public ResponseEntity<PostWithoutCommentPostDto>   getlAllPostByDate(){
-//
-//       ArrayList<Post> posts = (ArrayList<Post>) postRepository.findAll();
-//       Comparator<Post> comparatorDate = Comparator.comparing(Post::getUploadDate);
-//       posts.sort(comparatorDate);
-//      ArrayList<PostWithoutCommentPostDto> allPosts =modelMapper.map(posts, (Type) PostWithoutCommentPostDto.class);
-//     return ResponseEntity.ok(modelMapper.map(posts,PostWithoutCommentPostDto.class));
-//   }
+
 
     @SneakyThrows
     @PostMapping("new_post")
@@ -90,7 +81,8 @@ public class PostController {
     @PutMapping("/posts/{id}/upvote")
     public ResponseEntity<PostVoteResultsDto> upvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
-        long userId = (Long)session.getAttribute(UserController.User_Id);
+
+        long userId =  userRepository.getIdByRequest(request);
         Post p = postServices.votePost(true, id, userId);
         postRepository.save(p);
         PostVoteResultsDto pDto = postServices.PostToVoteResultsPostsDtoConversion(p);
@@ -99,7 +91,7 @@ public class PostController {
     @PutMapping("/posts/{id}/downvote")
     public ResponseEntity<PostVoteResultsDto> downvotePost(@PathVariable long id, HttpServletRequest request, HttpSession session) {
         userController.validateLogin(request);
-        long userId = (Long)session.getAttribute(UserController.User_Id);
+        long userId =  userRepository.getIdByRequest(request);
         Post p = postServices.votePost(false, id, userId);
         postRepository.save(p);
         PostVoteResultsDto pDto = postServices.PostToVoteResultsPostsDtoConversion(p);

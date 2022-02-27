@@ -4,7 +4,7 @@ import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.dto.newDtos.postDtos.PostVoteResultsDto;
 import com.example.springproject.exceptions.BadRequestException;
-        import com.example.springproject.exceptions.NotFoundException;
+import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
 import com.example.springproject.model.Category;
 import com.example.springproject.model.Post;
@@ -14,7 +14,7 @@ import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FilenameUtils;
-        import org.modelmapper.ModelMapper;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -53,13 +53,13 @@ public class PostServices {
     public Post create(String description, MultipartFile file, int categoryId, long userId) {
 
         String nameAndExt = postServices.saveMedia(file);
-        if(description == null || description.isBlank() || description.length() <= 2) {
+        if (description == null || description.isBlank() || description.length() <= 2) {
             throw new BadRequestException("post description is missing or is less than 3 symbols");
         }
-        if(categoryId <= 0 || !categoryRepository.existsById((long)categoryId)) {
+        if (categoryId <= 0 || !categoryRepository.existsById((long) categoryId)) {
             throw new NotFoundException("category with id=" + categoryId + " doesn't exist");
         }
-        if(userId <= 0 || !userRepository.existsById(userId)) {
+        if (userId <= 0 || !userRepository.existsById(userId)) {
             throw new NotFoundException("user with id=" + userId + " doesn't exist");
         }
         Post p = new Post();
@@ -73,45 +73,41 @@ public class PostServices {
         p.setUploadDate(LocalDateTime.now());
         return p;
     }
+
     public Post votePost(boolean isUpvote, long postId, long userId) {
         Post p = this.getPostById(postId);
         User u = userRepository.getById(userId);
 
-        if(isUpvote) {
-            if(u.getUpvotedPosts().contains(p)) {//already upvoted
+        if (isUpvote) {
+            if (u.getUpvotedPosts().contains(p)) {//already upvoted
                 u.getUpvotedPosts().remove(p);
                 p.getUpvoters().remove(u);
                 p.setUpvotes(p.getUpvotes() - 1);
-            }
-            else if(u.getDownvotedPosts().contains(p)) {//already downvoted
+            } else if (u.getDownvotedPosts().contains(p)) {//already downvoted
                 u.getDownvotedPosts().remove(p);
                 p.getDownvoters().remove(u);
                 p.setDownvotes(p.getDownvotes() - 1);
                 p.getUpvoters().add(u);
                 u.getUpvotedPosts().add(p);
                 p.setUpvotes(p.getUpvotes() + 1);
-            }
-            else {
+            } else {
                 p.getUpvoters().add(u);
                 u.getUpvotedPosts().add(p);
                 p.setUpvotes(p.getUpvotes() + 1);
             }
-        }
-        else {
-            if(u.getDownvotedPosts().contains(p)) {//already downvoted
+        } else {
+            if (u.getDownvotedPosts().contains(p)) {//already downvoted
                 u.getDownvotedPosts().remove(p);
                 p.getDownvoters().remove(u);
                 p.setDownvotes(p.getDownvotes() - 1);
-            }
-            else if(u.getUpvotedPosts().contains(p)) {//already upvoted
+            } else if (u.getUpvotedPosts().contains(p)) {//already upvoted
                 u.getUpvotedPosts().remove(p);
                 p.getUpvoters().remove(u);
                 p.setUpvotes(p.getUpvotes() - 1);
                 p.getDownvoters().add(u);
                 u.getDownvotedPosts().add(p);
                 p.setDownvotes(p.getDownvotes() + 1);
-            }
-            else {
+            } else {
                 p.getDownvoters().add(u);
                 u.getDownvotedPosts().add(p);
                 p.setDownvotes(p.getDownvotes() + 1);
@@ -119,6 +115,7 @@ public class PostServices {
         }
         return p;
     }
+
     public Post getPostById(long postId) {
         return postRepository.findById(postId).orElseThrow(() -> new NotFoundException("post with id=" + postId + " doesn't exist"));
     }
@@ -158,6 +155,7 @@ public class PostServices {
         });
         return allPosts;
     }
+
     public List<Post> sortPostsByUpvotes(List<Post> allPosts) {
         allPosts.sort((p1, p2) -> {
             return (p2.getUpvotes() - p2.getDownvotes()) - (p1.getUpvotes() - p1.getDownvotes());
@@ -168,12 +166,14 @@ public class PostServices {
     public PostVoteResultsDto PostToVoteResultsPostsDtoConversion(Post p) {
         return modelMapper.map(p, PostVoteResultsDto.class);
     }
+
     public DisplayPostDto PostToDisplayPostDtoConversion(Post p) {
         DisplayPostDto pDto = modelMapper.map(p, DisplayPostDto.class);
         pDto.setUserId(p.getOwner().getId());
         pDto.setCategory(modelMapper.map(p.getCategory(), CategoryDto.class));
         return pDto;
     }
+
     public List<DisplayPostDto> PostToDisplayPostDtoConversionCollection(List<Post> posts) {
         List<DisplayPostDto> pDtos = new ArrayList<>();
         for (Post p : posts) {
@@ -194,8 +194,8 @@ public class PostServices {
         Map<Long, String> descWithId = new HashMap<>();
 
         for (int i = 0; i < postIds.size(); i++) { // 2 * number of posts
-            numberOfFoundWords.put((long)postIds.get(i), 0);
-            descWithId.put((long)postIds.get(i), descriptions.get(i).toLowerCase());
+            numberOfFoundWords.put((long) postIds.get(i), 0);
+            descWithId.put((long) postIds.get(i), descriptions.get(i).toLowerCase());
         }
         this.countFoundKeywords(words, numberOfFoundWords, descWithId);// number of descriptions * search * average length of description
 
@@ -205,14 +205,14 @@ public class PostServices {
         System.out.println("@@@@@@@@@@@@"); //test print
         SortedSet<Map.Entry<Long, Integer>> sortedIds = this.sortIdsByFoundWords(numberOfFoundWords);
         List<DisplayPostDto> result = this.foundPostsFromSearch(sortedIds);
-       return result;
+        return result;
     }
 
     private List<DisplayPostDto> foundPostsFromSearch(SortedSet<Map.Entry<Long, Integer>> sortedIds) {
         List<DisplayPostDto> result = new ArrayList<>();
         for (Map.Entry<Long, Integer> e : sortedIds) {
             System.out.println(e.getKey() + " " + e.getValue()); //test print
-            if(e.getValue() > 0) {
+            if (e.getValue() > 0) {
                 result.add(this.PostToDisplayPostDtoConversion(postRepository.getById(e.getKey())));
             }
         }
@@ -231,12 +231,12 @@ public class PostServices {
         String[] wrds = search.split(ONLY_WORDS_REGEX);
         ArrayList<String> words = new ArrayList<>();
         for (String s : wrds) {
-            if(s.length() > 0 ) {
+            if (s.length() > 0) {
                 words.add(s.toLowerCase());
                 System.out.println(s);
             }
         }
-        if(words.size() == 0) {
+        if (words.size() == 0) {
             throw new NotFoundException("No posts were found.");
         }
         return words;
@@ -247,23 +247,23 @@ public class PostServices {
         for (String w : words) {
 
             for (Map.Entry<Long, String> e : descWithId.entrySet()) {
-                if(e.getValue().contains(w)) {
+                if (e.getValue().contains(w)) {
                     numberOfFoundWords.put(e.getKey(), numberOfFoundWords.get(e.getKey()) + 1);
                     anyKeywordsFound = true;
                 }
             }
         }
-        if(!anyKeywordsFound) {
+        if (!anyKeywordsFound) {
             throw new NotFoundException("No posts were found.");
         }
     }
+
     @SneakyThrows
     public String saveMedia(MultipartFile file) {
-        if(file.isEmpty()) {
+        if (file.isEmpty()) {
             throw new UnauthorizedException("File is empty.");
         }
-        System.out.println(file.getSize());
-        if(file.getSize() > MEDIA_MAX_SIZE) {
+        if (file.getSize() > MEDIA_MAX_SIZE) {
             throw new UnauthorizedException("File is too large. Limit is 100 mb");
         }
         fileServices.validateMediaType(file, PHOTO_AND_VIDEO);
@@ -279,7 +279,7 @@ public class PostServices {
     public List<DisplayPostDto> allPostsByCategory(Category c, boolean isByUpvotes, int pageNumber) {
         List<DisplayPostDto> pDtos;
         List<Post> posts;
-        if(isByUpvotes) {
+        if (isByUpvotes) {
             posts = postRepository.findAllByCategoryId(c.getId(), PageRequest.of(pageNumber, POSTS_PER_PAGE));
             pDtos = postServices.PostToDisplayPostDtoConversionCollection(postServices.sortPostsByUpvotes(posts));
         } else {
