@@ -293,10 +293,8 @@ public class UserServices {
             return true;
         } else {
             throw new BadRequestException("Email is mandatory !");
-
         }
     }
-
 
     public ResponseEntity<UserCreatedPostsByDate> getAllCreatedPosts(HttpServletRequest request) {
         User user = userRepository.getById(userRepository.getIdByRequest(request));
@@ -322,7 +320,6 @@ public class UserServices {
                 stream().sorted((p1, p2) -> p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
         return ResponseEntity.ok(userAllPosts);
     }
-
 
     public ResponseEntity<UserResponseDto> addCategory(long cId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
@@ -369,7 +366,6 @@ public class UserServices {
         userRepository.save(user);
 
         return ResponseEntity.ok("Please check your email !");
-
     }
 
     public ResponseEntity<String> verifyUser(long id, String token) {
@@ -382,8 +378,6 @@ public class UserServices {
                 return ResponseEntity.ok("Successfully verified your account please login !");
             }
             throw new UnauthorizedException("Please check email !");
-
-
         }
         throw new NotFoundException("User not found !");
     }
@@ -408,9 +402,5 @@ public class UserServices {
             return ResponseEntity.ok("Please login !");
         }
         throw new NotFoundException("User not found");
-
-
     }
-
-
 }

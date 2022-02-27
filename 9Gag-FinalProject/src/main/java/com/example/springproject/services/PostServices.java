@@ -1,5 +1,6 @@
 package com.example.springproject.services;
 
+import com.example.springproject.controller.UserController;
 import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
 import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
 import com.example.springproject.dto.newDtos.postDtos.PostVoteResultsDto;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,7 +52,14 @@ public class PostServices {
     @Autowired
     private PostServices postServices;
 
-    public Post create(String description, MultipartFile file, int categoryId, long userId) {
+    public DisplayPostDto createPost(String description, MultipartFile file, long userId, int categoryId) {
+        Post p = postServices.validatePost(description, file, categoryId, userId);
+        postRepository.save(p);
+        DisplayPostDto pDto = postServices.PostToDisplayPostDtoConversion(p);
+        return pDto;
+    }
+
+    public Post validatePost(String description, MultipartFile file, int categoryId, long userId) {
 
         String nameAndExt = postServices.saveMedia(file);
         if (description == null || description.isBlank() || description.length() <= 2) {
@@ -74,7 +83,7 @@ public class PostServices {
         return p;
     }
 
-    public Post votePost(boolean isUpvote, long postId, long userId) {
+    public PostVoteResultsDto votePost(boolean isUpvote, long postId, long userId) {
         Post p = this.getPostById(postId);
         User u = userRepository.getById(userId);
 
@@ -113,7 +122,9 @@ public class PostServices {
                 p.setDownvotes(p.getDownvotes() + 1);
             }
         }
-        return p;
+        postRepository.save(p);
+        PostVoteResultsDto pDto = postServices.PostToVoteResultsPostsDtoConversion(p);
+        return pDto;
     }
 
     public Post getPostById(long postId) {
@@ -287,5 +298,34 @@ public class PostServices {
             pDtos = postServices.PostToDisplayPostDtoConversionCollection(posts);
         }
         return pDtos;
+    }
+
+    public List<DisplayPostDto> getAllPosts(boolean isByUpvotes, int pageNumber) {
+        List<Post> allPosts;
+        if(isByUpvotes) {
+            allPosts = postRepository.getAllOrderByUpvotes(PageRequest.of(pageNumber, POSTS_PER_PAGE));
+        } else {
+            allPosts = postRepository.getAllOrderByUploadDate(PageRequest.of(pageNumber, POSTS_PER_PAGE));
+        }
+        List<DisplayPostDto> pDtos = postServices.PostToDisplayPostDtoConversionCollection(allPosts);
+        return pDtos;
+    }
+
+    public List<DisplayPostDto> getUpvotedPosts(long userId) {
+        Set<Post> posts = userRepository.getById(userId).getUpvotedPosts();
+        List<DisplayPostDto> pDtos = postServices.PostToDisplayPostDtoConversionCollection(postServices.sortPostsByDate(new ArrayList<>(posts)));
+        return pDtos;
+    }
+
+    public void deletePost(HttpSession session, long id) {
+        Post p = postServices.getPostById(id);
+        if(p.getOwner().getId() == (Long)session.getAttribute(UserController.User_Id)) {//if current user is owner
+            File fileToDel = new File("media" + File.separator + "postMedia" + File.separator + postRepository.getById(id).getMediaUrl());
+            fileToDel.delete();
+            postRepository.deleteById(id);
+        }
+        else {
+            throw new UnauthorizedException("Only the owner of the post can delete it!");
+        }
     }
 }

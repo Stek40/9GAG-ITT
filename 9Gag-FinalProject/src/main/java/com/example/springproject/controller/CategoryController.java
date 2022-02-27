@@ -27,16 +27,20 @@ public class CategoryController {
 
     @PostMapping("/category/addAllCategories")
     public void addAllCategories(@RequestBody ArrayList<Category> categories){
+        //no login
         categoryRepository.saveAll(categories);
     }
     @GetMapping("/category/{id}")
-    public ResponseEntity<List<DisplayPostDto>> getAllPostsByCategory(@PathVariable long id, @RequestParam("sort_by_upvotes") boolean isByUpvotes, @RequestParam("page") int pageNumber){
+    public ResponseEntity<List<DisplayPostDto>> getAllPostsByCategory(@PathVariable long id,
+                                                                      @RequestParam("sort_by_upvotes") boolean isByUpvotes,
+                                                                      @RequestParam("page") int pageNumber){
         //no login
         List<DisplayPostDto> pDtos = categoryServices.allPostsByCategory(id, isByUpvotes, pageNumber);
         return ResponseEntity.ok().body(pDtos);
     }
     @GetMapping("/categories")
     public ResponseEntity<List<CategoryDto>> getAllCategories() {
+        //no login
         return ResponseEntity.ok(categoryServices.getAll());
     }
 }

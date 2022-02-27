@@ -18,13 +18,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
      default User getUserByRequest(HttpServletRequest request){
         long id = (long) request.getSession().getAttribute(UserController.User_Id);
-
          return getById(id);
     }
 
    default long getIdByRequest(HttpServletRequest request){
          long id = (long) request.getSession().getAttribute(UserController.User_Id);
-
          return id;
     }
 }
