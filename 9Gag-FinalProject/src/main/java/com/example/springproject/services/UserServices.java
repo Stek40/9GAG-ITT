@@ -1,6 +1,7 @@
 package com.example.springproject.services;
 
 import com.example.springproject.controller.Email;
+import com.example.springproject.controller.UserController;
 import com.example.springproject.dto.userDtos.UserEditDto;
 import com.example.springproject.dto.userDtos.UserLoginDto;
 import com.example.springproject.dto.userDtos.UserResponseDto;
@@ -386,7 +387,10 @@ public class UserServices {
         throw new NotFoundException("User not found !");
     }
 
-    public ResponseEntity<String> setNewPassword(long id, String token, UserEditDto userEditDto) {
+    public ResponseEntity<String> setNewPassword(long id, String token, UserEditDto userEditDto,HttpServletRequest request) {
+        if (request.getSession().getAttribute(UserController.User_Id)!= null){
+            throw new BadRequestException("Please log out and follow the link to change password !");
+        }
         Optional<User> user = userRepository.findById(id);
         if (user.isPresent()) {
             if (userEditDto.getNewPassword() == null) {

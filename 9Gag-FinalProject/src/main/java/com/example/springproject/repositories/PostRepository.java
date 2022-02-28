@@ -41,4 +41,13 @@ public interface PostRepository  extends PagingAndSortingRepository<Post, Long> 
             value = "SELECT *, (2*upvotes - downvotes) as votes FROM posts WHERE category_id = ?",
             nativeQuery = true)
     List<Post> findAllByCategoryIdSortedByVotes(long id, Pageable pageable);
+
+    @Query(
+            value = "SELECT distinct( posts.id ) FROM 9gag.posts as posts\n" +
+                    "left join users_upvote_posts as upvotes on posts.id = upvotes.post_id\n" +
+                    "join comments on posts.id = comments.post_id\n" +
+                    "where posts.upload_date >= now()-interval 1 day\n" +
+                    "order by posts.upvotes desc",
+            nativeQuery = true)
+    List<Integer> trendingPosts(Pageable pageable);
 }
