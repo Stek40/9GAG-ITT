@@ -11,10 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.time.LocalDate;
+
 
 @RestController
 public class UserController {
@@ -36,8 +35,6 @@ public class UserController {
     @PostMapping("/users/newPassword")
     public ResponseEntity<String> setNewPassword(@RequestParam(name = "id") long id, @RequestParam(name = "?token") String token,
                                                  @RequestBody UserEditDto userEditDto, HttpServletRequest request) {
-
-
         return userServices.setNewPassword(id, token, userEditDto, request);
     }
 

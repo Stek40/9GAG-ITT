@@ -53,7 +53,7 @@ public class PostController {
 
 
     @GetMapping("/posts/trending")
-    public ResponseEntity<List<PostWithoutOwnerDto>> trendingPosts(@RequestParam int page) {
+    public ResponseEntity<List<PostWithoutOwnerDto>> trendingPosts(@RequestParam(defaultValue = "0") int page) {
         return ResponseEntity.ok(postServices.getTrendingPosts(page));
     }
 

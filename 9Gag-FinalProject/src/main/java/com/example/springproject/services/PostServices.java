@@ -349,6 +349,9 @@ public class PostServices {
     }
 
     public List<PostWithoutOwnerDto> getTrendingPosts(int pageNumber) {
+        if(pageNumber < 0){
+            throw new BadRequestException("Invalid page !");
+        }
         List<Integer> posts = postRepository.trendingPosts(PageRequest.of(pageNumber,3));
         List<PostWithoutOwnerDto> postWithoutOwnerDtos = new ArrayList<>();
         for (Integer id:posts) {
