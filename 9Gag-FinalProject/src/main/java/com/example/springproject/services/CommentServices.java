@@ -1,10 +1,10 @@
 package com.example.springproject.services;
 
-import com.example.springproject.dto.CommentResponseDto;
+import com.example.springproject.dto.commentDtos.CommentResponseDto;
 
-import com.example.springproject.dto.UserWithCommentsDto;
-import com.example.springproject.dto.newDtos.comment.AllCommentsOnPostDto;
-import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
+import com.example.springproject.dto.userDtos.UserWithCommentsDto;
+import com.example.springproject.dto.commentDtos.AllCommentsOnPostDto;
+import com.example.springproject.dto.postDtos.DisplayPostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;

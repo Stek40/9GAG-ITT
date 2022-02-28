@@ -1,15 +1,8 @@
 package com.example.springproject.controller;
 
 import com.example.springproject.ValidateData;
-import com.example.springproject.dto.*;
-import com.example.springproject.dto.newDtos.user.UserLoginDto;
-import com.example.springproject.dto.newDtos.user.UserCreatedPostsByDate;
-import com.example.springproject.dto.newDtos.user.UserRegisterDto;
-import com.example.springproject.dto.newDtos.user.UserResponseDtoRegister;
-import com.example.springproject.exceptions.NotFoundException;
+import com.example.springproject.dto.userDtos.*;
 import com.example.springproject.exceptions.UnauthorizedException;
-import com.example.springproject.model.User;
-import com.example.springproject.repositories.UserRepository;
 import com.example.springproject.services.UserServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

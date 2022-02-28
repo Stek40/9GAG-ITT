@@ -1,9 +1,10 @@
 package com.example.springproject.services;
 
 import com.example.springproject.controller.UserController;
-import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
-import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
-import com.example.springproject.dto.newDtos.postDtos.PostVoteResultsDto;
+import com.example.springproject.dto.categoryDtos.CategoryDto;
+import com.example.springproject.dto.postDtos.DisplayPostDto;
+import com.example.springproject.dto.postDtos.PostVoteResultsDto;
+import com.example.springproject.dto.userDtos.UserWithAllSavedPostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
 import com.example.springproject.exceptions.UnauthorizedException;
@@ -22,12 +23,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.example.springproject.controller.PostController.POSTS_PER_PAGE;
 
@@ -302,7 +305,7 @@ public class PostServices {
 
     public List<DisplayPostDto> getAllPosts(boolean isByUpvotes, int pageNumber) {
         List<Post> allPosts;
-        if(isByUpvotes) {
+        if (isByUpvotes) {
             allPosts = postRepository.getAllOrderByUpvotes(PageRequest.of(pageNumber, POSTS_PER_PAGE));
         } else {
             allPosts = postRepository.getAllOrderByUploadDate(PageRequest.of(pageNumber, POSTS_PER_PAGE));
@@ -319,13 +322,29 @@ public class PostServices {
 
     public void deletePost(HttpSession session, long id) {
         Post p = postServices.getPostById(id);
-        if(p.getOwner().getId() == (Long)session.getAttribute(UserController.User_Id)) {//if current user is owner
+        if (p.getOwner().getId() == (Long) session.getAttribute(UserController.User_Id)) {//if current user is owner
             File fileToDel = new File("media" + File.separator + "postMedia" + File.separator + postRepository.getById(id).getMediaUrl());
             fileToDel.delete();
             postRepository.deleteById(id);
-        }
-        else {
+        } else {
             throw new UnauthorizedException("Only the owner of the post can delete it!");
         }
+    }
+
+    public UserWithAllSavedPostDto getAllSavedPosts(HttpServletRequest request) {
+        User user = userRepository.getUserByRequest(request);
+        UserWithAllSavedPostDto userWithAllSavedPostDto = modelMapper.map(user, UserWithAllSavedPostDto.class);
+        userWithAllSavedPostDto.setSavedPosts(userWithAllSavedPostDto.getSavedPosts()
+                .stream().sorted((p1, p2) -> p2.getUploadDate().compareTo(p1.getUploadDate())).collect(Collectors.toList()));
+        return userWithAllSavedPostDto;
+    }
+
+    public UserWithAllSavedPostDto getAllSavedPostsByVote(HttpServletRequest request) {
+        User user = userRepository.getUserByRequest(request);
+        UserWithAllSavedPostDto userWithAllSavedPostDto = modelMapper.map(user, UserWithAllSavedPostDto.class);
+        userWithAllSavedPostDto.setSavedPosts(userWithAllSavedPostDto.getSavedPosts()
+                .stream().sorted((p1, p2) -> p2.getUpvotes() - (p1.getUpvotes())).collect(Collectors.toList()));
+
+        return userWithAllSavedPostDto;
     }
 }

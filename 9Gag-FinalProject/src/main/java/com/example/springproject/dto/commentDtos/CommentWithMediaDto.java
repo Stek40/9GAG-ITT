@@ -1,4 +1,4 @@
-package com.example.springproject.dto;
+package com.example.springproject.dto.commentDtos;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

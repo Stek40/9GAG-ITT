@@ -1,13 +1,10 @@
-package com.example.springproject.dto.newDtos.comment;
+package com.example.springproject.dto.commentDtos;
 
-import com.example.springproject.dto.CommentWithoutOwnerDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 @Getter
 @Setter

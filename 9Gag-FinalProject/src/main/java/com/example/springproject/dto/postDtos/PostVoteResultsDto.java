@@ -1,4 +1,4 @@
-package com.example.springproject.dto.newDtos.categoriesDto;
+package com.example.springproject.dto.postDtos;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -7,8 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class CategoryDto {
-
+public class PostVoteResultsDto {
     private long id;
-    private String name;
+    private int upvotes;
+    private int downvotes;
 }

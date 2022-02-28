@@ -1,14 +1,11 @@
-package com.example.springproject.dto.newDtos.postDtos;
+package com.example.springproject.dto.postDtos;
 
-import com.example.springproject.dto.PostWithoutCommentPostDto;
-import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
-import com.example.springproject.model.Category;
+import com.example.springproject.dto.categoryDtos.CategoryDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Getter
 @Setter

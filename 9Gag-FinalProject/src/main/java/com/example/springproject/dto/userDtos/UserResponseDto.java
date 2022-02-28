@@ -1,8 +1,7 @@
-package com.example.springproject.dto;
+package com.example.springproject.dto.userDtos;
 
 
-import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
-import com.example.springproject.model.Post;
+import com.example.springproject.dto.categoryDtos.CategoryDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

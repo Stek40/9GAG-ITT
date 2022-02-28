@@ -1,7 +1,7 @@
 package com.example.springproject.controller;
 
-import com.example.springproject.dto.newDtos.categoriesDto.CategoryDto;
-import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
+import com.example.springproject.dto.categoryDtos.CategoryDto;
+import com.example.springproject.dto.postDtos.DisplayPostDto;
 import com.example.springproject.model.Category;
 import com.example.springproject.repositories.CategoryRepository;
 import com.example.springproject.services.CategoryServices;

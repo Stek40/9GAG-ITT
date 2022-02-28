@@ -1,5 +1,6 @@
-package com.example.springproject.dto;
+package com.example.springproject.dto.postDtos;
 
+import com.example.springproject.dto.commentDtos.CommentWithOutPostDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

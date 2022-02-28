@@ -1,12 +1,12 @@
-package com.example.springproject.dto.newDtos.user;
+package com.example.springproject.dto.userDtos;
 
-import com.example.springproject.dto.PostWithoutCommentPostDto;
+import com.example.springproject.dto.postDtos.PostWithoutCommentPostDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
-import java.util.Set;
+
 @Getter
 @Setter
 @NoArgsConstructor

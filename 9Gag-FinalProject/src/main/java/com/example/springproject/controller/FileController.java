@@ -1,11 +1,7 @@
 package com.example.springproject.controller;
 
-import com.example.springproject.dto.CommentWithMediaDto;
+import com.example.springproject.dto.commentDtos.CommentWithMediaDto;
 import com.example.springproject.exceptions.NotFoundException;
-import com.example.springproject.model.Comment;
-import com.example.springproject.repositories.CommentRepository;
-import com.example.springproject.repositories.PostRepository;
-import com.example.springproject.repositories.UserRepository;
 import com.example.springproject.services.FileServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +14,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Optional;
 
 @RestController
 public class FileController {

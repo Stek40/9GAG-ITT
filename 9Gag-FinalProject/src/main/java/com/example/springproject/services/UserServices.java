@@ -1,12 +1,12 @@
 package com.example.springproject.services;
 
 import com.example.springproject.controller.Email;
-import com.example.springproject.dto.UserEditDto;
-import com.example.springproject.dto.newDtos.user.UserLoginDto;
-import com.example.springproject.dto.UserResponseDto;
-import com.example.springproject.dto.newDtos.user.UserCreatedPostsByDate;
-import com.example.springproject.dto.newDtos.user.UserRegisterDto;
-import com.example.springproject.dto.newDtos.user.UserResponseDtoRegister;
+import com.example.springproject.dto.userDtos.UserEditDto;
+import com.example.springproject.dto.userDtos.UserLoginDto;
+import com.example.springproject.dto.userDtos.UserResponseDto;
+import com.example.springproject.dto.userDtos.UserCreatedPostsByDate;
+import com.example.springproject.dto.userDtos.UserRegisterDto;
+import com.example.springproject.dto.userDtos.UserResponseDtoRegister;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.DateTimeParseException;
 import com.example.springproject.exceptions.NotFoundException;
@@ -25,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.File;

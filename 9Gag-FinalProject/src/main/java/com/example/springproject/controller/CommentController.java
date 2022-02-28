@@ -1,9 +1,10 @@
 package com.example.springproject.controller;
 
 import com.example.springproject.ValidateData;
-import com.example.springproject.dto.*;
-import com.example.springproject.dto.newDtos.comment.AllCommentsOnPostDto;
-import com.example.springproject.dto.newDtos.postDtos.DisplayPostDto;
+import com.example.springproject.dto.commentDtos.AllCommentsOnPostDto;
+import com.example.springproject.dto.commentDtos.CommentResponseDto;
+import com.example.springproject.dto.postDtos.DisplayPostDto;
+import com.example.springproject.dto.userDtos.UserWithCommentsDto;
 import com.example.springproject.services.CommentServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
