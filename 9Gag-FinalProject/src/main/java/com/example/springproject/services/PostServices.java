@@ -4,6 +4,7 @@ import com.example.springproject.controller.UserController;
 import com.example.springproject.dto.categoryDtos.CategoryDto;
 import com.example.springproject.dto.postDtos.DisplayPostDto;
 import com.example.springproject.dto.postDtos.PostVoteResultsDto;
+import com.example.springproject.dto.postDtos.PostWithoutOwnerDto;
 import com.example.springproject.dto.userDtos.UserWithAllSavedPostDto;
 import com.example.springproject.exceptions.BadRequestException;
 import com.example.springproject.exceptions.NotFoundException;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.File;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -134,9 +136,9 @@ public class PostServices {
         return postRepository.findById(postId).orElseThrow(() -> new NotFoundException("post with id=" + postId + " doesn't exist"));
     }
 
-    public User savedPost(int postId, long userId) {
+    public User savedPost(int postId, HttpServletRequest request) {
         Optional<Post> post = postRepository.findById((long) postId);
-        User user = userRepository.getById(userId);
+        User user = userRepository.getUserByRequest(request);
         if (post.isPresent()) {
             if (user.getSavedPosts().contains(post.get())) {
                 throw new BadRequestException("User already saved this post !");
@@ -149,9 +151,9 @@ public class PostServices {
         throw new NotFoundException("Post not found !");
     }
 
-    public User unSavedPost(int postId, Long userId) {
+    public User unSavedPost(int postId, HttpServletRequest request) {
         Optional<Post> post = postRepository.findById((long) postId);
-        User user = userRepository.getById(userId);
+        User user = userRepository.getUserByRequest(request);
         if (post.isPresent()) {
             if (user.getSavedPosts().contains(post.get())) {
                 user.getSavedPosts().remove(post.get());
@@ -346,5 +348,14 @@ public class PostServices {
                 .stream().sorted((p1, p2) -> p2.getUpvotes() - (p1.getUpvotes())).collect(Collectors.toList()));
 
         return userWithAllSavedPostDto;
+    }
+
+    public List<PostWithoutOwnerDto> getTrendingPosts(int pageNumber) {
+        List<Integer> posts = postRepository.trendingPosts(PageRequest.of(pageNumber,3));
+        List<PostWithoutOwnerDto> postWithoutOwnerDtos = new ArrayList<>();
+        for (Integer id:posts) {
+            postWithoutOwnerDtos.add(modelMapper.map(postRepository.getById(id),PostWithoutOwnerDto.class));
+        }
+return postWithoutOwnerDtos;
     }
 }

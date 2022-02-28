@@ -89,7 +89,7 @@ public class CommentServices {
 
         if (comment.getDownVoters().contains(user)) {
             comment.getDownVoters().remove(user);
-            comment.setDownvotes(comment.getDownVoters().size());
+            comment.setDownvotes(comment.getDownvotes()-1);
             commentRepository.save(comment);
         }
         if (!comment.getUppVoters().contains(user)) {
@@ -98,7 +98,7 @@ public class CommentServices {
             CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
             commentResponseDto.setUpvotes(comment.getUppVoters().size());
             commentResponseDto.setUserId(user.getId());
-            comment.setUpvotes(comment.getUppVoters().size());
+            comment.setUpvotes(comment.getUpvotes()+1);
             commentRepository.save(comment);
             return ResponseEntity.ok(commentResponseDto);
         }
@@ -111,13 +111,13 @@ public class CommentServices {
 
         if (comment.getUppVoters().contains(user)) {
             comment.getUppVoters().remove(user);
-            comment.setUpvotes(comment.getUppVoters().size());
+            comment.setUpvotes(comment.getUpvotes()-1);
             commentRepository.save(comment);
         }
         if (!comment.getDownVoters().contains(user)) {
             user.getDownVote().add(comment);
             comment.getDownVoters().add(user);
-            comment.setDownvotes(comment.getDownVoters().size());
+            comment.setDownvotes(comment.getDownvotes()-1);
             commentRepository.save(comment);
             CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
             commentResponseDto.setUserId(user.getId());

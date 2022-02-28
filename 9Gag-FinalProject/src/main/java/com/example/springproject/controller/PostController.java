@@ -3,6 +3,7 @@ package com.example.springproject.controller;
 import com.example.springproject.ValidateData;
 import com.example.springproject.dto.postDtos.DisplayPostDto;
 import com.example.springproject.dto.postDtos.PostVoteResultsDto;
+import com.example.springproject.dto.postDtos.PostWithoutOwnerDto;
 import com.example.springproject.dto.userDtos.UserResponseDto;
 import com.example.springproject.dto.userDtos.UserWithAllSavedPostDto;
 import com.example.springproject.model.Post;
@@ -51,19 +52,24 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.OK).body(pDto);
     }
 
-    @PutMapping("/save_post")
+
+    @GetMapping("/posts/trending")
+    public ResponseEntity<List<PostWithoutOwnerDto>> trendingPosts(@RequestParam int page) {
+        return ResponseEntity.ok(postServices.getTrendingPosts(page));
+    }
+
+
+    @PutMapping("/posts/save_post")
     public ResponseEntity<UserResponseDto> savePost(@RequestParam("postId") int postId, HttpServletRequest request) {
         userController.validateLogin(request);
-        long userId = userRepository.getIdByRequest(request);
-        User user = postServices.savedPost(postId, userId);
+        User user = postServices.savedPost(postId, request);
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
-    @PutMapping("/unsave_post")
+    @PutMapping("/posts/unsave_post")
     public ResponseEntity<UserResponseDto> unSave(@RequestParam("postId") int postId, HttpServletRequest request) {
         userController.validateLogin(request);
-        long userId = userRepository.getIdByRequest(request);
-        User user = postServices.unSavedPost(postId, (Long) request.getSession().getAttribute(UserController.User_Id));
+        User user = postServices.unSavedPost(postId, request);
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDto.class));
     }
 
