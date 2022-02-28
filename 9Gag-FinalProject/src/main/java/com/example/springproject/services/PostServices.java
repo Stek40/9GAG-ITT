@@ -17,6 +17,7 @@ import com.example.springproject.repositories.PostRepository;
 import com.example.springproject.repositories.UserRepository;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -206,13 +207,13 @@ public class PostServices {
             System.out.println(s);
         }
         Map<Long, Integer> numberOfFoundWords = new HashMap<>();
-        Map<Long, String> descWithId = new HashMap<>();
+        Map<Long, String> descsWithIds = new HashMap<>();
 
         for (int i = 0; i < postIds.size(); i++) { // 2 * number of posts
             numberOfFoundWords.put((long) postIds.get(i), 0);
-            descWithId.put((long) postIds.get(i), descriptions.get(i).toLowerCase());
+            descsWithIds.put((long) postIds.get(i), descriptions.get(i).toLowerCase());
         }
-        this.countFoundKeywords(words, numberOfFoundWords, descWithId);// number of descriptions * search * average length of description
+        this.countFoundKeywords(words, numberOfFoundWords, descsWithIds);// number of descriptions * search * average length of description
 
         for (Map.Entry<Long, Integer> e : numberOfFoundWords.entrySet()) { //test print
             System.out.println(e.getKey() + " " + e.getValue());
@@ -262,8 +263,9 @@ public class PostServices {
         for (String w : words) {
 
             for (Map.Entry<Long, String> e : descWithId.entrySet()) {
-                if (e.getValue().contains(w)) {
-                    numberOfFoundWords.put(e.getKey(), numberOfFoundWords.get(e.getKey()) + 1);
+                int count = StringUtils.countMatches(e.getValue(), w);
+                if(count > 0) {
+                    numberOfFoundWords.put(e.getKey(), numberOfFoundWords.get(e.getKey()) + count);
                     anyKeywordsFound = true;
                 }
             }
