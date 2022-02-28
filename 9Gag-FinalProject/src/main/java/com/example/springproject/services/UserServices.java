@@ -55,8 +55,10 @@ public class UserServices {
 
     public static final String LOGGED = "logged";
     public static final String LOGGED_FROM = "loggedFrom";
-    public static final String User_Id = "user_id";
-    private static String randomStringUtils = RandomStringUtils.randomAlphabetic(10, 16);
+    public static final String USER_ID = "user_id";
+    private static String RANDOM_STRING_UTILS = RandomStringUtils.randomAlphabetic(10, 16);
+
+    private static final int PROFILE_PICTURE_MAX_SIZE = 1024 * 1024 * 5; //5 MB
 
     private String regexUsername = "^(?=.{6,20}$)(?![_.])(?!.*[_.]{2})[a-zA-Z0-9._]+(?<![_.])$";
     private String regexPassword = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$";
@@ -137,9 +139,9 @@ public class UserServices {
         user.setFull_name(full_name);
         user.setPassword(passwordEncoder.encode(password));
         user.setUsername(username);
-        user.setToken(randomStringUtils);
+        user.setToken(RANDOM_STRING_UTILS);
         userRepository.save(user);
-        new Thread(() -> sendEmail.SendEmailVerification(user.getEmail(), randomStringUtils, user.getId())).start();
+        new Thread(() -> sendEmail.SendEmailVerification(user.getEmail(), RANDOM_STRING_UTILS, user.getId())).start();
         return ResponseEntity.ok(modelMapper.map(user, UserResponseDtoRegister.class));
     }
 
@@ -170,7 +172,7 @@ public class UserServices {
         HttpSession session = request.getSession();
         session.setAttribute(LOGGED, true);
         session.setAttribute(LOGGED_FROM, request.getRemoteAddr());
-        session.setAttribute(User_Id, user.getId());
+        session.setAttribute(USER_ID, user.getId());
         UserResponseDto userResponseDto = modelMapper.map(user, UserResponseDto.class);
         return ResponseEntity.ok(userResponseDto);
     }
@@ -178,6 +180,9 @@ public class UserServices {
     public ResponseEntity<UserResponseDto> changeProfilePicture(MultipartFile multipartFile, HttpServletRequest request) {
         if (multipartFile == null){
             throw new BadRequestException("Please select image from files !");
+        }
+        if (multipartFile.getSize() > PROFILE_PICTURE_MAX_SIZE) {
+            throw new UnauthorizedException("File is too large. Limit is " + PROFILE_PICTURE_MAX_SIZE / (1024*1024) + " mb");
         }
         User user = userRepository.getUserByRequest(request);
         String ext = FilenameUtils.getExtension(multipartFile.getOriginalFilename());
@@ -358,7 +363,7 @@ public class UserServices {
         if (user == null) {
             throw new NotFoundException("User not found");
         }
-        String token = randomStringUtils;
+        String token = RANDOM_STRING_UTILS;
 
         new Thread(() -> sendEmail.SendEmailChangePassword(emailUser, token, user.getId())).start();
         user.setToken(token);

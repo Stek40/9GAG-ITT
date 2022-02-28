@@ -50,7 +50,7 @@ public class CommentController {
     public ResponseEntity<CommentResponseDto> removeVot(@RequestParam(name = "commentId") long commentId,
                                                         HttpServletRequest request) {
         ValidateData.validatorLogin(request);
-        return commentServices.removeVot(commentId, request);
+        return commentServices.removeVote(commentId, request);
     }
 
     @GetMapping("/comment/getAll")

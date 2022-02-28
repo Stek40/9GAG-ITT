@@ -37,4 +37,8 @@ public interface PostRepository  extends PagingAndSortingRepository<Post, Long> 
             value = "SELECT * FROM posts WHERE category_id = ?",
             nativeQuery = true)
     List<Post> findAllByCategoryId(long id, Pageable pageable);
+    @Query(
+            value = "SELECT *, (2*upvotes - downvotes) as votes FROM posts WHERE category_id = ?",
+            nativeQuery = true)
+    List<Post> findAllByCategoryIdSortedByVotes(long id, Pageable pageable);
 }

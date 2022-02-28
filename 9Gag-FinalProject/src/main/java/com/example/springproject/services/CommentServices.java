@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+
 @Service
 public class CommentServices {
 
@@ -48,12 +49,16 @@ public class CommentServices {
     private PostServices postServices;
     @Autowired
     private FileServices fileServices;
+    private static final int COMMENT_MEDIA_MAX_SIZE = 1024 * 1024 * 5; //5 MB
 
     @Transactional(rollbackFor = SQLException.class)
     public ResponseEntity<CommentResponseDto> createComment(MultipartFile file, String text, long postId, HttpServletRequest request) {
 
         if (text == null && file == null) {
             throw new BadRequestException("Please enter a comment");
+        }
+        if (file.getSize() > COMMENT_MEDIA_MAX_SIZE) {
+            throw new UnauthorizedException("File is too large. Limit is " + COMMENT_MEDIA_MAX_SIZE / (1024*1024) + " mb");
         }
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("Post not found"));
         User commentOwner = userRepository.getUserByRequest(request);
@@ -78,10 +83,9 @@ public class CommentServices {
         commentRepository.save(comment);
         CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
         commentResponseDto.setUserId(commentOwner.getId());
-
         return ResponseEntity.ok(commentResponseDto);
-
     }
+
     @Transactional(rollbackFor = SQLException.class)
     public ResponseEntity<CommentResponseDto> upVoteComment(long commentId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
@@ -104,6 +108,7 @@ public class CommentServices {
         }
         throw new BadRequestException("The user already upvote this comment !");
     }
+
     @Transactional(rollbackFor = SQLException.class)
     public ResponseEntity<CommentResponseDto> downVoteComment(long commentId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
@@ -124,11 +129,10 @@ public class CommentServices {
             return ResponseEntity.ok(commentResponseDto);
         }
         throw new BadRequestException("The user already downvote this comment !");
-
     }
 
     @Transactional(rollbackFor = SQLException.class)
-    public ResponseEntity<CommentResponseDto> removeVot(long commentId, HttpServletRequest request) {
+    public ResponseEntity<CommentResponseDto> removeVote(long commentId, HttpServletRequest request) {
         User user = userRepository.getUserByRequest(request);
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new NotFoundException("Comment not found !"));
 
@@ -146,7 +150,6 @@ public class CommentServices {
             commentRepository.save(comment);
             CommentResponseDto commentResponseDto = modelMapper.map(comment, CommentResponseDto.class);
             commentResponseDto.setUserId(user.getId());
-
             return ResponseEntity.ok(commentResponseDto);
         }
         throw new UnauthorizedException("Тhe user didn't vote !");
@@ -164,14 +167,12 @@ public class CommentServices {
         return allCommentedPosts;
     }
 
-
     public AllCommentsOnPostDto getAllCommentByPostId(long postId) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new NotFoundException("Post not found !"));
         AllCommentsOnPostDto allComments = modelMapper.map(post, AllCommentsOnPostDto.class);
         allComments.setComments(allComments.getComments().stream().sorted((c1, c2) ->
                 (int) (c2.getUpvotes() - c1.getUpvotes())).collect(Collectors.toList()));
         return allComments;
-
     }
 
     public AllCommentsOnPostDto getAllCommentByPostDate(long postId) {
@@ -180,14 +181,12 @@ public class CommentServices {
             AllCommentsOnPostDto allComments = modelMapper.map(post.get(), AllCommentsOnPostDto.class);
             allComments.setComments(allComments.getComments().stream()
                     .sorted((c1, c2) -> (c2.getDateTime().compareTo(c1.getDateTime()))).collect(Collectors.toList()));
-
             return allComments;
         }
         throw new NotFoundException("Post not found !");
     }
 
     public ResponseEntity<CommentResponseDto> removeComment(long commendId, HttpServletRequest request) {
-
         User user = userRepository.getUserByRequest(request);
         Optional<Comment> comment = commentRepository.findById(commendId);
         if (comment.isPresent()) {
@@ -211,6 +210,5 @@ public class CommentServices {
                 .sorted((c1, c2) -> (c2.getDateTime().compareTo(c1.getDateTime()))).collect(Collectors.toList()));
         return ResponseEntity.ok(userWithCommentsDto);
     }
-
 }
 

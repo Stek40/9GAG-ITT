@@ -16,9 +16,6 @@ public class CountryController {
 
     @PostMapping("/countries")
     public void addAllCountries(@RequestBody ArrayList<Country> countries) {
-
-
         countryRepository.saveAll(countries);
-
     }
 }

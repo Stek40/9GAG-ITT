@@ -40,7 +40,7 @@ public class PostServices {
     private static final String ONLY_WORDS_REGEX = "[^a-zA-Z]";
     private static final String URL_REGEX = "((http|https)://)(www.)?[a-zA-Z0-9@:%._\\\\+~#?&//=]{2,256}\\\\.[a-z]{2,6}\\\\b([-a-zA-Z0-9@:%._\\\\+~#?&//=]*)";
     private static final boolean PHOTO_AND_VIDEO = false;
-    private static final int MEDIA_MAX_SIZE = 1024 * 1024 * 100; //100 MB
+    private static final int POST_MEDIA_MAX_SIZE = 1024 * 1024 * 100; //100 MB
 
     @Autowired
     private UserRepository userRepository;
@@ -170,13 +170,6 @@ public class PostServices {
         return allPosts;
     }
 
-    public List<Post> sortPostsByUpvotes(List<Post> allPosts) {
-        allPosts.sort((p1, p2) -> {
-            return (p2.getUpvotes() - p2.getDownvotes()) - (p1.getUpvotes() - p1.getDownvotes());
-        });
-        return allPosts;
-    }
-
     public PostVoteResultsDto PostToVoteResultsPostsDtoConversion(Post p) {
         return modelMapper.map(p, PostVoteResultsDto.class);
     }
@@ -197,6 +190,12 @@ public class PostServices {
     }
 
     public List<DisplayPostDto> searchPostGenerator(String search) {
+        /*
+        serialize "search string" into keywords
+        search in the descriptions of the posts for each word
+        return posts sorted by most common keywords found first
+        */
+
         ArrayList<String> words = this.extractWords(search); //length of the search
         ArrayList<String> descriptions = new ArrayList<>(postRepository.findAllPostDescriptions());
         ArrayList<Integer> postIds = new ArrayList<>(postRepository.findAllPostIds());
@@ -247,7 +246,7 @@ public class PostServices {
         for (String s : wrds) {
             if (s.length() > 0) {
                 words.add(s.toLowerCase());
-                System.out.println(s);
+                System.out.println(s); // test print
             }
         }
         if (words.size() == 0) {
@@ -277,11 +276,10 @@ public class PostServices {
         if (file.isEmpty()) {
             throw new UnauthorizedException("File is empty.");
         }
-        if (file.getSize() > MEDIA_MAX_SIZE) {
-            throw new UnauthorizedException("File is too large. Limit is 100 mb");
+        if (file.getSize() > POST_MEDIA_MAX_SIZE) {
+            throw new UnauthorizedException("File is too large. Limit is " + POST_MEDIA_MAX_SIZE / (1024*1024) + " mb");
         }
         fileServices.validateMediaType(file, PHOTO_AND_VIDEO);
-
         String name = String.valueOf(System.nanoTime());
         String ext = FilenameUtils.getExtension(file.getOriginalFilename());
         String nameAndExt = name + "." + ext;
@@ -294,8 +292,8 @@ public class PostServices {
         List<DisplayPostDto> pDtos;
         List<Post> posts;
         if (isByUpvotes) {
-            posts = postRepository.findAllByCategoryId(c.getId(), PageRequest.of(pageNumber, POSTS_PER_PAGE));
-            pDtos = postServices.PostToDisplayPostDtoConversionCollection(postServices.sortPostsByUpvotes(posts));
+            posts = postRepository.findAllByCategoryIdSortedByVotes(c.getId(), PageRequest.of(pageNumber, POSTS_PER_PAGE, Sort.by("votes").descending()));
+            pDtos = postServices.PostToDisplayPostDtoConversionCollection(posts);
         } else {
             posts = postRepository.findAllByCategoryId(c.getId(), PageRequest.of(pageNumber, POSTS_PER_PAGE, Sort.by("upload_date").descending()));
             pDtos = postServices.PostToDisplayPostDtoConversionCollection(posts);

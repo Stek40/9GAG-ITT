@@ -18,7 +18,6 @@ import java.nio.file.Files;
 @RestController
 public class FileController {
 
-
     @Autowired
     UserController userController;
 
@@ -29,7 +28,6 @@ public class FileController {
     public void download(HttpServletResponse response, HttpServletRequest request) {
         userController.validateLogin(request);
         fileServices.downloadProfilePicture(response, request);
-
     }
 
     @GetMapping("/files/post/download")
@@ -45,6 +43,5 @@ public class FileController {
     @GetMapping("/files/comment/download")
     public ResponseEntity<CommentWithMediaDto> getComment(@RequestParam(name = "commentId") long cId, HttpServletResponse response) {
         return fileServices.downloadCommentMedia(cId, response);
-
     }
 }

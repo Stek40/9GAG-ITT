@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 public class PostController {
@@ -130,11 +129,6 @@ public class PostController {
 
     @GetMapping("/posts/search/{search}")
     public ResponseEntity<List<DisplayPostDto>> searchPosts(@PathVariable String search) {
-        /*
-        serialize "search string" into keywords
-        search in the descriptions of the posts for each word
-        return posts sorted by most common keywords found first
-        */
         List<DisplayPostDto> result = postServices.searchPostGenerator(search);
         return ResponseEntity.ok().body(result);
     }

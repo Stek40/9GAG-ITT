@@ -57,7 +57,6 @@ public class FileServices {
         } catch (IOException e) {
             throw new NotFoundException("Profile picture not found !");
         }
-
     }
 
     public ResponseEntity<CommentWithMediaDto> downloadCommentMedia(long cId, HttpServletResponse response) {
@@ -69,7 +68,6 @@ public class FileServices {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             CommentWithMediaDto commentWithMediaDto = new CommentWithMediaDto();
             commentWithMediaDto.setText(comment.get().getText());
             return ResponseEntity.ok(commentWithMediaDto);
